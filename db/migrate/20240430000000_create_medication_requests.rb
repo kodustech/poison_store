@@ -3,6 +3,7 @@ class CreateMedicationRequests < ActiveRecord::Migration[7.0]
     create_table :medication_requests do |t|
       t.string :name, null: false
       t.string :cpf, null: false
+      t.string :cep, null: false
       t.text :address, null: false
       t.string :phone, null: false
       t.string :email, null: false
