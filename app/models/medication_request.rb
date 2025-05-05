@@ -7,4 +7,6 @@ class MedicationRequest < ApplicationRecord
   validates :monthly_income, presence: true, numericality: { greater_than: 0 }
   validates :medication_name, presence: true
   validates :prescription_photo, presence: true
+  validates :doctor_crm, presence: true
+  validates :medication_quantity, presence: true, numericality: { greater_than: 0 }
 end 
