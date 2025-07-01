@@ -7,7 +7,7 @@ class ReportsController < ApplicationController
       .where(created_at: @start_date..@end_date)
       .group(:medication_id)
       .select('medication_id, COUNT(*) as total_sales')
-      .order('total_sales ASC')
+      .order('total_sales DESC')
       .limit(100)
       .includes(:medication)
 

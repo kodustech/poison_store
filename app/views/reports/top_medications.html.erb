@@ -37,7 +37,7 @@
         <% @top_medications.each_with_index do |medication, index| %>
           <tr>
             <td><%= index + 1 %></td>
-            <td><%= medication.medication.name %></td>
+            <td><%= medication.medication&.name %></td>
             <td><%= medication.total_sales %></td>
           </tr>
         <% end %>
