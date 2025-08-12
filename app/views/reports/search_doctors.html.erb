@@ -1,0 +1,141 @@
+<div class="container mt-4">
+  <h1>Busca de Médicos por CRM</h1>
+  
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <%= form_with url: search_doctors_reports_path, method: :get, local: true, class: "form-inline" do |form| %>
+        <div class="input-group">
+          <%= form.text_field :crm, 
+              value: @crm, 
+              placeholder: "Digite o CRM do médico (busca parcial)", 
+              class: "form-control",
+              required: true %>
+          <div class="input-group-append">
+            <%= form.submit "Buscar", class: "btn btn-primary" %>
+          </div>
+        </div>
+      <% end %>
+      <small class="form-text text-muted">A busca é parcial - você pode digitar apenas parte do CRM</small>
+    </div>
+  </div>
+
+  <% if @crm.present? %>
+    <% if @doctor_details.any? %>
+      <div class="card">
+        <div class="card-header">
+          <h5>Resultados para CRM: "<%= @crm %>"</h5>
+          <p class="mb-0">Encontrados <%= @doctor_details.count %> médico(s)</p>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>CRM</th>
+                  <th>Total de Prescrições</th>
+                  <th>Medicamentos Únicos</th>
+                  <th>Dias Ativos</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @doctor_details.each do |doctor| %>
+                  <tr>
+                    <td><strong><%= doctor[:doctor_crm] %></strong></td>
+                    <td><span class="badge badge-primary"><%= doctor[:total_prescriptions] %></span></td>
+                    <td><span class="badge badge-info"><%= doctor[:unique_medications] %></span></td>
+                    <td><span class="badge badge-success"><%= doctor[:active_days] %></span></td>
+                    <td>
+                      <%= link_to "Ver Prescrições", 
+                          medication_requests_path(doctor_crm: doctor[:doctor_crm]), 
+                          class: "btn btn-sm btn-outline-primary" %>
+                      <%= link_to "Ver Detalhes", 
+                          "#", 
+                          class: "btn btn-sm btn-outline-secondary",
+                          data: { 
+                            toggle: "modal", 
+                            target: "#doctorModal#{doctor[:doctor_crm].to_s.gsub(/[^0-9A-Za-z]/, '')}" 
+                          } %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modais para detalhes de cada médico -->
+      <% @doctor_details.each do |doctor| %>
+        <div class="modal fade" id="doctorModal<%= doctor[:doctor_crm].to_s.gsub(/[^0-9A-Za-z]/, '') %>" tabindex="-1" role="dialog">
+          <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Médico - CRM: <%= doctor[:doctor_crm] %></h5>
+                <button type="button" class="close" data-dismiss="modal">
+                  <span>&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>Estatísticas Gerais</h6>
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between">
+                        <span>Total de Prescrições:</span>
+                        <span class="badge badge-primary"><%= doctor[:total_prescriptions] %></span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between">
+                        <span>Medicamentos Únicos:</span>
+                        <span class="badge badge-info"><%= doctor[:unique_medications] %></span>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between">
+                        <span>Dias Ativos:</span>
+                        <span class="badge badge-success"><%= doctor[:active_days] %></span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Período de Atividade</h6>
+                    <ul class="list-group">
+                      <li class="list-group-item d-flex justify-content-between">
+                        <span>Primeira Prescrição:</span>
+                        <small><%= doctor[:first_prescription]&.strftime("%d/%m/%Y") %></small>
+                      </li>
+                      <li class="list-group-item d-flex justify-content-between">
+                        <span>Última Prescrição:</span>
+                        <small><%= doctor[:last_prescription]&.strftime("%d/%m/%Y") %></small>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <%= link_to "Ver Todas as Prescrições", 
+                    medication_requests_path(doctor_crm: doctor[:doctor_crm]), 
+                    class: "btn btn-primary" %>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="alert alert-warning">
+        <h5>Nenhum resultado encontrado</h5>
+        <p>Não foram encontradas prescrições para o CRM: <strong>"<%= @crm %>"</strong></p>
+        <p class="mb-0">Tente:</p>
+        <ul class="mb-0">
+          <li>Verificar se o CRM está correto</li>
+          <li>Usar apenas parte do CRM (a busca é parcial)</li>
+          <li>Verificar se existem prescrições cadastradas</li>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+
+  <div class="mt-4">
+    <%= link_to "Voltar aos Relatórios", reports_path, class: "btn btn-secondary" %>
+    <%= link_to "Ver Top Medicamentos", top_medications_reports_path, class: "btn btn-outline-primary" %>
+  </div>
+</div>

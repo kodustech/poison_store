@@ -1,0 +1,71 @@
+<div class="container mt-4">
+  <h1>Relatórios e Consultas</h1>
+  
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-search"></i> Busca de Médicos por CRM
+          </h5>
+          <p class="card-text">
+            Encontre médicos e visualize estatísticas baseadas no número de CRM. 
+            A busca é parcial e mostra informações detalhadas sobre prescrições.
+          </p>
+          <%= link_to "Buscar Médicos", search_doctors_reports_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-chart-bar"></i> Top Medicamentos
+          </h5>
+          <p class="card-text">
+            Visualize os medicamentos mais solicitados em um período específico. 
+            Análise de vendas e tendências de prescrições.
+          </p>
+          <%= link_to "Ver Top Medicamentos", top_medications_reports_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Funcionalidades Disponíveis</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Busca de Médicos</h6>
+              <ul>
+                <li>Busca parcial por CRM</li>
+                <li>Estatísticas de prescrições</li>
+                <li>Histórico de atividade</li>
+                <li>Medicamentos prescritos</li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>Top Medicamentos</h6>
+              <ul>
+                <li>Ranking por período</li>
+                <li>Filtros por data</li>
+                <li>Exportação em JSON</li>
+                <li>Análise de tendências</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <%= link_to "Voltar ao Início", root_path, class: "btn btn-secondary" %>
+  </div>
+</div>
