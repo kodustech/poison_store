@@ -37,11 +37,19 @@
         <% @top_medications.each_with_index do |medication, index| %>
           <tr>
             <td><%= index + 1 %></td>
-            <td><%= medication.medication&.name %></td>
-            <td><%= medication.total_sales %></td>
+            <td><strong><%= medication[:medication_name] %></strong></td>
+            <td>
+              <span class="badge badge-primary"><%= medication[:total_sales] %></span>
+              <small class="text-muted">(Qtd: <%= medication[:total_quantity] %>)</small>
+            </td>
           </tr>
         <% end %>
       </tbody>
     </table>
+  </div>
+
+  <div class="mt-4">
+    <%= link_to "Voltar aos Relatórios", reports_path, class: "btn btn-secondary" %>
+    <%= link_to "Buscar Médicos", search_doctors_reports_path, class: "btn btn-outline-primary" %>
   </div>
 </div> 
