@@ -3,19 +3,32 @@
 
   <%= form_tag top_medications_reports_path, method: :get, class: "mb-4" do %>
     <div class="row">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="form-group">
           <%= label_tag :start_date, "Data Inicial" %>
           <%= date_field_tag :start_date, @start_date, class: "form-control" %>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div class="form-group">
           <%= label_tag :end_date, "Data Final" %>
           <%= date_field_tag :end_date, @end_date, class: "form-control" %>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
+        <div class="form-group">
+          <%= label_tag :limit, "Quantidade de Resultados" %>
+          <%= select_tag :limit, 
+              options_for_select([
+                ['Top 10', 10],
+                ['Top 25', 25], 
+                ['Top 50', 50],
+                ['Todos', 0]
+              ], @limit), 
+              class: "form-control" %>
+        </div>
+      </div>
+      <div class="col-md-3">
         <div class="form-group">
           <%= label_tag :submit, "&nbsp;".html_safe %>
           <%= submit_tag "Filtrar", class: "btn btn-primary form-control" %>
@@ -23,6 +36,20 @@
       </div>
     </div>
   <% end %>
+
+  <div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    Exibindo 
+    <% if @limit > 0 %>
+      <strong>top <%= @limit %></strong> medicamentos
+    <% else %>
+      <strong>todos</strong> os medicamentos
+    <% end %>
+    do período de <strong><%= @start_date.strftime("%d/%m/%Y") %></strong> a <strong><%= @end_date.strftime("%d/%m/%Y") %></strong>
+    <% if @top_medications.any? %>
+      - Total de <strong><%= @top_medications.count %></strong> medicamentos encontrados
+    <% end %>
+  </div>
 
   <div class="table-responsive">
     <table class="table table-striped">
