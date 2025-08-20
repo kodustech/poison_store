@@ -1,0 +1,222 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Relatório Mensal de Vendas</h1>
+    <div>
+      <%= link_to 'Remédios', over_the_counter_medications_path, class: 'btn btn-outline-primary' %>
+      <%= link_to 'Vendas', medication_sales_path, class: 'btn btn-outline-success' %>
+    </div>
+  </div>
+
+  <!-- Filtros de Período -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Filtrar por Período</h5>
+      <%= form_with url: monthly_sales_report_path, method: :get, local: true do |form| %>
+        <div class="row">
+          <div class="col-md-4">
+            <%= form.label :year, 'Ano', class: 'form-label' %>
+            <%= form.select :year, @year_options, { selected: @current_year }, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :month, 'Mês', class: 'form-label' %>
+            <%= form.select :month, @month_options, { selected: @current_month }, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <%= form.submit 'Filtrar', class: 'btn btn-primary' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Resumo Geral -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <div class="card bg-primary text-white">
+        <div class="card-body text-center">
+          <h4><%= @sales_data[:total_sales] %></h4>
+          <p class="mb-0">Total de Vendas</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-success text-white">
+        <div class="card-body text-center">
+          <h4>R$ <%= number_with_precision(@sales_data[:total_revenue], precision: 2) %></h4>
+          <p class="mb-0">Receita Total</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body text-center">
+          <h4><%= @sales_data[:sales_with_prescription] %></h4>
+          <p class="mb-0">Com Receita</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card bg-info text-white">
+        <div class="card-body text-center">
+          <h4><%= @sales_data[:sales_without_prescription] %></h4>
+          <p class="mb-0">Sem Receita</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detalhamento por Tipo de Venda -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Vendas com Receita Médica</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <h3 class="text-warning"><%= @sales_data[:sales_with_prescription] %></h3>
+              <p class="text-muted">Quantidade</p>
+            </div>
+            <div class="col-6">
+              <h3 class="text-warning">R$ <%= number_with_precision(@sales_data[:revenue_with_prescription], precision: 2) %></h3>
+              <p class="text-muted">Receita</p>
+            </div>
+          </div>
+          <% if @sales_data[:sales_with_prescription] > 0 %>
+            <div class="progress">
+              <div class="progress-bar bg-warning" style="width: <%= (@sales_data[:sales_with_prescription].to_f / @sales_data[:total_sales] * 100).round(1) %>%"></div>
+            </div>
+            <small class="text-muted">
+              <%= (@sales_data[:sales_with_prescription].to_f / @sales_data[:total_sales] * 100).round(1) %>% do total
+            </small>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Vendas sem Receita Médica</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <h3 class="text-info"><%= @sales_data[:sales_without_prescription] %></h3>
+              <p class="text-muted">Quantidade</p>
+            </div>
+            <div class="col-6">
+              <h3 class="text-info">R$ <%= number_with_precision(@sales_data[:revenue_without_prescription], precision: 2) %></h3>
+              <p class="text-muted">Receita</p>
+            </div>
+          </div>
+          <% if @sales_data[:sales_without_prescription] > 0 %>
+            <div class="progress">
+              <div class="progress-bar bg-info" style="width: <%= (@sales_data[:sales_without_prescription].to_f / @sales_data[:total_sales] * 100).round(1) %>%"></div>
+            </div>
+            <small class="text-muted">
+              <%= (@sales_data[:sales_without_prescription].to_f / @sales_data[:total_sales] * 100).round(1) %>% do total
+            </small>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Medicamentos -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5>Top 10 Medicamentos Mais Vendidos</h5>
+    </div>
+    <div class="card-body">
+      <% if @sales_data[:top_medications].any? %>
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Medicamento</th>
+                <th>Quantidade Vendida</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @sales_data[:top_medications].each_with_index do |med, index| %>
+                <tr>
+                  <td>
+                    <span class="badge bg-primary fs-6"><%= index + 1 %></span>
+                  </td>
+                  <td><strong><%= med[:name] %></strong></td>
+                  <td><%= med[:quantity] %> unidades</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-muted text-center">Nenhuma venda registrada para este período.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Vendas Diárias -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5>Vendas Diárias - <%= Date::MONTHNAMES[@current_month] %>/<%= @current_year %></h5>
+    </div>
+    <div class="card-body">
+      <% if @sales_data[:daily_sales].any? %>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Receita (R$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @sales_data[:daily_sales].each do |date, revenue| %>
+                <tr>
+                  <td><%= date %></td>
+                  <td><strong>R$ <%= number_with_precision(revenue, precision: 2) %></strong></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-muted text-center">Nenhuma venda registrada para este período.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Comparativo Mensal -->
+  <div class="card">
+    <div class="card-header">
+      <h5>Comparativo: Vendas com vs. Sem Receita</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <h6>Vendas com Receita</h6>
+          <div class="d-flex justify-content-between">
+            <span>Quantidade: <%= @sales_data[:sales_with_prescription] %></span>
+            <span>Receita: R$ <%= number_with_precision(@sales_data[:revenue_with_prescription], precision: 2) %></span>
+          </div>
+          <div class="progress mb-2">
+            <div class="progress-bar bg-warning" style="width: <%= @sales_data[:total_sales] > 0 ? (@sales_data[:sales_with_prescription].to_f / @sales_data[:total_sales] * 100).round(1) : 0 %>%"></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <h6>Vendas sem Receita</h6>
+          <div class="d-flex justify-content-between">
+            <span>Quantidade: <%= @sales_data[:sales_without_prescription] %></span>
+            <span>Receita: R$ <%= number_with_precision(@sales_data[:revenue_without_prescription], precision: 2) %></span>
+          </div>
+          <div class="progress mb-2">
+            <div class="progress-bar bg-info" style="width: <%= @sales_data[:total_sales] > 0 ? (@sales_data[:sales_without_prescription].to_f / @sales_data[:total_sales] * 100).round(1) : 0 %>%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
