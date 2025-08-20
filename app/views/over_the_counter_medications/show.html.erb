@@ -1,0 +1,130 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2><%= @medication.name %></h2>
+            <div>
+              <%= link_to 'Editar', edit_over_the_counter_medication_path(@medication), class: 'btn btn-warning' %>
+              <%= link_to 'Voltar', over_the_counter_medications_path, class: 'btn btn-secondary' %>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Informações Básicas</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Princípio Ativo:</strong></td>
+                  <td><%= @medication.active_ingredient %></td>
+                </tr>
+                <tr>
+                  <td><strong>Forma Farmacêutica:</strong></td>
+                  <td><%= @medication.dosage_form %></td>
+                </tr>
+                <tr>
+                  <td><strong>Concentração:</strong></td>
+                  <td><%= @medication.strength %></td>
+                </tr>
+                <tr>
+                  <td><strong>Fabricante:</strong></td>
+                  <td><%= @medication.manufacturer %></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h5>Informações Comerciais</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Preço:</strong></td>
+                  <td><span class="h5 text-primary">R$ <%= number_with_precision(@medication.price, precision: 2) %></span></td>
+                </tr>
+                <tr>
+                  <td><strong>Estoque:</strong></td>
+                  <td>
+                    <span class="badge <%= @medication.in_stock? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @medication.stock_quantity %> unidades
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Estoque Mínimo:</strong></td>
+                  <td><%= @medication.minimum_stock %> unidades</td>
+                </tr>
+                <tr>
+                  <td><strong>Receita Obrigatória:</strong></td>
+                  <td>
+                    <span class="badge <%= @medication.requires_prescription? ? 'bg-warning' : 'bg-success' %>">
+                      <%= @medication.requires_prescription? ? 'Sim' : 'Não' %>
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <% if @medication.description.present? %>
+            <div class="mt-4">
+              <h5>Descrição</h5>
+              <p class="text-muted"><%= @medication.description %></p>
+            </div>
+          <% end %>
+
+          <div class="mt-4">
+            <h5>Status do Medicamento</h5>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Disponibilidade</h6>
+                    <span class="badge <%= @medication.available_for_sale? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @medication.available_for_sale? ? 'Disponível' : 'Indisponível' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Estoque</h6>
+                    <span class="badge <%= @medication.in_stock? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @medication.in_stock? ? 'Em Estoque' : 'Sem Estoque' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Alerta de Estoque</h6>
+                    <span class="badge <%= @medication.low_stock? ? 'bg-warning' : 'bg-success' %> fs-6">
+                      <%= @medication.low_stock? ? 'Estoque Baixo' : 'Estoque OK' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <%= link_to 'Nova Venda', new_medication_sale_path(over_the_counter_medication_id: @medication.id), 
+              class: 'btn btn-primary btn-lg w-100 mb-2' %>
+          <%= link_to 'Ver Vendas', medication_sales_path(over_the_counter_medication_id: @medication.id), 
+              class: 'btn btn-outline-info w-100 mb-2' %>
+          <%= link_to 'Relatório Mensal', monthly_sales_report_path(year: Date.current.year, month: Date.current.month), 
+              class: 'btn btn-outline-success w-100' %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
