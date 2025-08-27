@@ -113,3 +113,92 @@ puts "\nRemédios criados com sucesso!"
 puts "Total: #{OverTheCounterMedication.count} medicamentos cadastrados"
 puts "Sem receita: #{OverTheCounterMedication.no_prescription_required.count}"
 puts "Com receita: #{OverTheCounterMedication.requires_prescription.count}"
+
+# Seeds para Profissionais Médicos
+puts "\nCriando profissionais médicos..."
+
+medical_professionals = [
+  {
+    name: "Dr. Carlos Eduardo Silva",
+    crm: "12345",
+    specialty: "Cardiologia",
+    phone: "(11) 99999-1111",
+    email: "carlos.silva@cardio.com.br",
+    address: "Rua das Flores, 123",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "01234-567",
+    discount_percentage: 15.0,
+    active: true,
+    notes: "Especialista em cardiologia intervencionista"
+  },
+  {
+    name: "Dra. Ana Paula Santos",
+    crm: "67890",
+    specialty: "Pediatria",
+    phone: "(11) 99999-2222",
+    email: "ana.santos@pediatria.com.br",
+    address: "Av. Paulista, 456",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "01310-100",
+    discount_percentage: 12.5,
+    active: true,
+    notes: "Pediatra com especialização em neonatologia"
+  },
+  {
+    name: "Dr. Roberto Mendes",
+    crm: "11111",
+    specialty: "Ortopedia",
+    phone: "(11) 99999-3333",
+    email: "roberto.mendes@orto.com.br",
+    address: "Rua Augusta, 789",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "01212-000",
+    discount_percentage: 10.0,
+    active: true,
+    notes: "Especialista em cirurgia do joelho e quadril"
+  },
+  {
+    name: "Dra. Fernanda Costa",
+    crm: "22222",
+    specialty: "Dermatologia",
+    phone: "(11) 99999-4444",
+    email: "fernanda.costa@derma.com.br",
+    address: "Rua Oscar Freire, 321",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "01426-000",
+    discount_percentage: 8.0,
+    active: true,
+    notes: "Dermatologista especializada em estética"
+  },
+  {
+    name: "Dr. Marcelo Oliveira",
+    crm: "33333",
+    specialty: "Neurologia",
+    phone: "(11) 99999-5555",
+    email: "marcelo.oliveira@neuro.com.br",
+    address: "Av. Brigadeiro Faria Lima, 654",
+    city: "São Paulo",
+    state: "SP",
+    zip_code: "04538-000",
+    discount_percentage: 20.0,
+    active: true,
+    notes: "Neurologista com foco em doenças neurodegenerativas"
+  }
+]
+
+# Criar profissionais médicos
+medical_professionals.each do |prof_data|
+  professional = MedicalProfessional.find_or_create_by(crm: prof_data[:crm]) do |prof|
+    prof.assign_attributes(prof_data)
+  end
+  puts "✓ #{professional.name} - #{professional.specialty} - CRM: #{professional.crm} - Desconto: #{professional.discount_percentage}%"
+end
+
+puts "\nProfissionais médicos criados com sucesso!"
+puts "Total: #{MedicalProfessional.count} profissionais cadastrados"
+puts "Ativos: #{MedicalProfessional.active.count}"
+puts "Inativos: #{MedicalProfessional.where(active: false).count}"

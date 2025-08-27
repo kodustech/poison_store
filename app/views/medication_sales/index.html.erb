@@ -16,6 +16,7 @@
               <th>Quantidade</th>
               <th>Preço Unit.</th>
               <th>Total</th>
+              <th>Desconto</th>
               <th>Receita</th>
               <th>Método Pagamento</th>
               <th>Ações</th>
@@ -35,12 +36,40 @@
                 </td>
                 <td><%= sale.quantity %></td>
                 <td>R$ <%= number_with_precision(sale.unit_price, precision: 2) %></td>
-                <td><strong>R$ <%= number_with_precision(sale.total_price, precision: 2) %></strong></td>
+                <td>
+                  <% if sale.discount_applied > 0 %>
+                    <div>
+                      <span class="text-decoration-line-through text-muted">
+                        R$ <%= number_with_precision(sale.original_price, precision: 2) %>
+                      </span><br>
+                      <strong class="text-success">
+                        R$ <%= number_with_precision(sale.total_price, precision: 2) %>
+                      </strong>
+                    </div>
+                  <% else %>
+                    <strong>R$ <%= number_with_precision(sale.total_price, precision: 2) %></strong>
+                  <% end %>
+                </td>
+                <td>
+                  <% if sale.discount_applied > 0 %>
+                    <span class="badge bg-success">
+                      <%= number_to_percentage(sale.discount_percentage, precision: 1) %>
+                    </span><br>
+                    <small class="text-muted">
+                      R$ <%= number_with_precision(sale.discount_applied, precision: 2) %>
+                    </small>
+                  <% else %>
+                    <span class="text-muted">-</span>
+                  <% end %>
+                </td>
                 <td>
                   <% if sale.sold_with_prescription %>
                     <span class="badge bg-warning">Com Receita</span>
                     <% if sale.doctor_name.present? %>
                       <br><small class="text-muted">Dr. <%= sale.doctor_name %></small>
+                      <% if sale.doctor_crm.present? %>
+                        <br><small class="text-muted">CRM: <%= sale.doctor_crm %></small>
+                      <% end %>
                     <% end %>
                   <% else %>
                     <span class="badge bg-success">Sem Receita</span>

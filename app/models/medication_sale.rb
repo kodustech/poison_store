@@ -16,6 +16,10 @@ class MedicationSale
   field :sale_date, type: Date
   field :payment_method, type: String
   field :notes, type: String
+  field :discount_applied, type: Float, default: 0.0
+  field :discount_percentage, type: Float, default: 0.0
+  field :original_price, type: Float
+  field :final_price, type: Float
 
   belongs_to :over_the_counter_medication
 
@@ -38,7 +42,27 @@ class MedicationSale
   private
 
   def calculate_total_price
-    self.total_price = quantity * unit_price if quantity && unit_price
+    if quantity && unit_price
+      self.original_price = quantity * unit_price
+      self.final_price = self.original_price
+      
+      # Aplicar desconto se houver CRM válido
+      if doctor_crm.present? && sold_with_prescription
+        apply_medical_discount
+      end
+      
+      self.total_price = self.final_price
+    end
+  end
+
+  def apply_medical_discount
+    medical_professional = MedicalProfessional.find_by_crm(doctor_crm)
+    
+    if medical_professional&.active?
+      self.discount_percentage = medical_professional.discount_percentage
+      self.discount_applied = (self.original_price * discount_percentage / 100.0).round(2)
+      self.final_price = (self.original_price - self.discount_applied).round(2)
+    end
   end
 
   def update_stock

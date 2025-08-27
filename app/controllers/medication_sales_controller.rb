@@ -17,6 +17,11 @@ class MedicationSalesController < ApplicationController
     @sale = MedicationSale.new(sale_params)
     @sale.sale_date = Date.current if @sale.sale_date.blank?
     
+    # Aplicar desconto médico se aplicável
+    if @sale.sold_with_prescription && @sale.doctor_crm.present?
+      MedicalDiscountService.apply_discount_to_sale(@sale)
+    end
+    
     if @sale.save
       redirect_to @sale, notice: 'Venda registrada com sucesso!'
     else
@@ -31,6 +36,12 @@ class MedicationSalesController < ApplicationController
 
   def update
     if @sale.update(sale_params)
+      # Recalcular desconto médico se aplicável
+      if @sale.sold_with_prescription && @sale.doctor_crm.present?
+        MedicalDiscountService.apply_discount_to_sale(@sale)
+        @sale.save
+      end
+      
       redirect_to @sale, notice: 'Venda atualizada com sucesso!'
     else
       @medications = OverTheCounterMedication.active.in_stock

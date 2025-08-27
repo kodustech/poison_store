@@ -108,10 +108,35 @@
                 <div class="col-md-6">
                   <div class="mb-3">
                     <%= form.label :doctor_crm, 'CRM do Médico', class: 'form-label' %>
-                    <%= form.text_field :doctor_crm, class: 'form-control' %>
+                    <div class="input-group">
+                      <%= form.text_field :doctor_crm, class: 'form-control', id: 'doctor_crm_field' %>
+                      <button type="button" class="btn btn-outline-primary" id="search_crm_btn">
+                        <i class="fas fa-search"></i> Buscar
+                      </button>
+                    </div>
+                    <div id="crm_search_result" class="mt-2"></div>
                   </div>
                 </div>
               </div>
+              
+              <!-- Campos de desconto -->
+              <div id="discount_info" style="display: none;" class="mb-3">
+                <div class="alert alert-info">
+                  <h6>Desconto Médico Aplicado</h6>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <strong>Médico:</strong> <span id="doctor_name_display"></span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Especialidade:</strong> <span id="specialty_display"></span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Desconto:</strong> <span id="discount_percentage_display"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <div class="mb-3">
                 <%= form.label :prescription_reference, 'Referência da Receita', class: 'form-label' %>
                 <%= form.text_field :prescription_reference, class: 'form-control', placeholder: 'Número ou código da receita' %>
@@ -138,13 +163,103 @@
 document.addEventListener('DOMContentLoaded', function() {
   const prescriptionCheckbox = document.getElementById('prescription_checkbox');
   const prescriptionFields = document.getElementById('prescription_fields');
+  const searchCrmBtn = document.getElementById('search_crm_btn');
+  const doctorCrmField = document.getElementById('doctor_crm_field');
+  const crmSearchResult = document.getElementById('crm_search_result');
+  const discountInfo = document.getElementById('discount_info');
   
+  // Controle dos campos de receita
   prescriptionCheckbox.addEventListener('change', function() {
     if (this.checked) {
       prescriptionFields.style.display = 'block';
     } else {
       prescriptionFields.style.display = 'none';
+      // Limpar desconto se não houver receita
+      discountInfo.style.display = 'none';
+      crmSearchResult.innerHTML = '';
     }
   });
+  
+  // Busca de CRM
+  searchCrmBtn.addEventListener('click', function() {
+    const crm = doctorCrmField.value.trim();
+    if (!crm) {
+      showCrmResult('Por favor, digite um CRM válido.', 'danger');
+      return;
+    }
+    
+    searchCrm(crm);
+  });
+  
+  // Busca automática ao pressionar Enter no campo CRM
+  doctorCrmField.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      searchCrmBtn.click();
+    }
+  });
+  
+  function searchCrm(crm) {
+    fetch(`/medical_professionals/search_by_crm?crm=${encodeURIComponent(crm)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showCrmResult(`CRM encontrado: ${data.professional.name} (${data.professional.specialty})`, 'success');
+          showDiscountInfo(data.professional);
+        } else {
+          showCrmResult(data.message || 'CRM não encontrado', 'danger');
+          hideDiscountInfo();
+        }
+      })
+      .catch(error => {
+        console.error('Erro na busca:', error);
+        showCrmResult('Erro ao buscar CRM. Tente novamente.', 'danger');
+        hideDiscountInfo();
+      });
+  }
+  
+  function showCrmResult(message, type) {
+    crmSearchResult.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  }
+  
+  function showDiscountInfo(professional) {
+    document.getElementById('doctor_name_display').textContent = professional.name;
+    document.getElementById('specialty_display').textContent = professional.specialty;
+    document.getElementById('discount_percentage_display').textContent = `${professional.discount_percentage}%`;
+    discountInfo.style.display = 'block';
+  }
+  
+  function hideDiscountInfo() {
+    discountInfo.style.display = 'none';
+  }
+  
+  // Cálculo automático de preço com desconto
+  const quantityField = document.querySelector('input[name="medication_sale[quantity]"]');
+  const unitPriceField = document.querySelector('input[name="medication_sale[unit_price]"]');
+  
+  function updatePriceCalculation() {
+    const quantity = parseInt(quantityField.value) || 0;
+    const unitPrice = parseFloat(unitPriceField.value) || 0;
+    
+    if (quantity > 0 && unitPrice > 0) {
+      const originalPrice = quantity * unitPrice;
+      const discountInfo = document.getElementById('discount_info');
+      
+      if (discountInfo.style.display !== 'none') {
+        const discountPercentage = parseFloat(document.getElementById('discount_percentage_display').textContent) || 0;
+        const discountAmount = (originalPrice * discountPercentage / 100);
+        const finalPrice = originalPrice - discountAmount;
+        
+        // Atualizar campos de preço se existirem
+        const totalPriceField = document.querySelector('input[name="medication_sale[total_price]"]');
+        if (totalPriceField) {
+          totalPriceField.value = finalPrice.toFixed(2);
+        }
+      }
+    }
+  }
+  
+  quantityField.addEventListener('input', updatePriceCalculation);
+  unitPriceField.addEventListener('input', updatePriceCalculation);
 });
 </script>

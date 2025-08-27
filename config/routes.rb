@@ -4,6 +4,12 @@ Rails.application.routes.draw do
   resources :over_the_counter_medications
   resources :medication_sales
   
+  resources :medical_professionals do
+    collection do
+      get :search_by_crm
+    end
+  end
+  
   resources :reports, only: [:index] do
     collection do
       get :top_medications

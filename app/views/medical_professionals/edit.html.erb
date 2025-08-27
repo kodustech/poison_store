@@ -1,0 +1,111 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Editar Profissional Médico</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @medical_professional, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @medical_professional.errors.any? %>
+              <div class="alert alert-danger">
+                <h4>Erros encontrados:</h4>
+                <ul>
+                  <% @medical_professional.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :name, 'Nome Completo *', class: 'form-label' %>
+                <%= form.text_field :name, class: 'form-control', required: true %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :crm, 'CRM *', class: 'form-label' %>
+                <%= form.text_field :crm, class: 'form-control', required: true %>
+                <div class="form-text">Apenas números, entre 2 e 10 dígitos</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :specialty, 'Especialidade *', class: 'form-label' %>
+                <%= form.text_field :specialty, class: 'form-control', required: true %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :discount_percentage, 'Percentual de Desconto *', class: 'form-label' %>
+                <%= form.number_field :discount_percentage, class: 'form-control', required: true, min: 0, max: 50, step: 0.5 %>
+                <div class="form-text">Entre 0% e 50%</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :phone, 'Telefone', class: 'form-label' %>
+                <%= form.telephone_field :phone, class: 'form-control' %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :email, 'E-mail', class: 'form-label' %>
+                <%= form.email_field :email, class: 'form-control' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :address, 'Endereço', class: 'form-label' %>
+              <%= form.text_field :address, class: 'form-control' %>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= form.label :city, 'Cidade', class: 'form-label' %>
+                <%= form.text_field :city, class: 'form-control' %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :state, 'Estado', class: 'form-label' %>
+                <%= form.select :state, [
+                  ['Acre', 'AC'], ['Alagoas', 'AL'], ['Amapá', 'AP'], ['Amazonas', 'AM'],
+                  ['Bahia', 'BA'], ['Ceará', 'CE'], ['Distrito Federal', 'DF'], ['Espírito Santo', 'ES'],
+                  ['Goiás', 'GO'], ['Maranhão', 'MA'], ['Mato Grosso', 'MT'], ['Mato Grosso do Sul', 'MS'],
+                  ['Minas Gerais', 'MG'], ['Pará', 'PA'], ['Paraíba', 'PB'], ['Paraná', 'PR'],
+                  ['Pernambuco', 'PE'], ['Piauí', 'PI'], ['Rio de Janeiro', 'RJ'], ['Rio Grande do Norte', 'RN'],
+                  ['Rio Grande do Sul', 'RS'], ['Rondônia', 'RO'], ['Roraima', 'RR'], ['Santa Catarina', 'SC'],
+                  ['São Paulo', 'SP'], ['Sergipe', 'SE'], ['Tocantins', 'TO']
+                ], { prompt: 'Selecione o estado' }, class: 'form-select' %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :zip_code, 'CEP', class: 'form-label' %>
+                <%= form.text_field :zip_code, class: 'form-control' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :notes, 'Observações', class: 'form-label' %>
+              <%= form.text_area :notes, class: 'form-control', rows: 3 %>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <%= form.check_box :active, class: 'form-check-input' %>
+                <%= form.label :active, 'Profissional ativo', class: 'form-check-label' %>
+                <div class="form-text">Profissionais inativos não podem gerar descontos</div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Voltar', medical_professional_path(@medical_professional), class: 'btn btn-secondary' %>
+              <%= form.submit 'Atualizar Profissional', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
