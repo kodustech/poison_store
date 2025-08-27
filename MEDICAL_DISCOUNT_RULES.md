@@ -1,164 +1,164 @@
-# Regras de Negócio - Sistema de Desconto Médico
+# Business Rules - Medical Discount System
 
-## Visão Geral
-Este documento descreve as regras de negócio implementadas no sistema de desconto médico da Poison Store, que permite que profissionais médicos cadastrados gerem descontos automáticos em vendas de medicamentos quando o paciente apresentar receita com seu CRM.
+## Overview
+This document describes the business rules implemented in the Poison Store medical discount system, which allows registered medical professionals to generate automatic discounts on medication sales when the patient presents a prescription with their CRM.
 
-## Funcionalidades Principais
+## Main Features
 
-### 1. Cadastro de Profissionais Médicos
-- **Campos obrigatórios**: Nome, CRM, Especialidade, Percentual de Desconto
-- **Campos opcionais**: Telefone, E-mail, Endereço completo, Observações
-- **Validações**:
-  - CRM deve ser único no sistema
-  - CRM deve conter apenas números (2 a 10 dígitos)
-  - Percentual de desconto deve estar entre 0% e 50%
-  - E-mail deve ter formato válido (se informado)
+### 1. Medical Professional Registration
+- **Required fields**: Name, CRM, Specialty, Discount Percentage
+- **Optional fields**: Phone, Email, Complete Address, Notes
+- **Validations**:
+  - CRM must be unique in the system
+  - CRM must contain only numbers (2 to 10 digits)
+  - Discount percentage must be between 0% and 50%
+  - Email must have valid format (if provided)
 
-### 2. Sistema de Desconto Automático
-- **Ativação**: Desconto é aplicado automaticamente quando:
-  - A venda é marcada como "com receita médica"
-  - O CRM do médico é informado
-  - O CRM existe no sistema e está ativo
-  - O profissional médico está cadastrado e ativo
+### 2. Automatic Discount System
+- **Activation**: Discount is automatically applied when:
+  - The sale is marked as "with medical prescription"
+  - The doctor's CRM is provided
+  - The CRM exists in the system and is active
+  - The medical professional is registered and active
 
-- **Cálculo do Desconto**:
-  - Desconto = (Preço Original × Percentual de Desconto) ÷ 100
-  - Preço Final = Preço Original - Desconto
-  - Todos os valores são arredondados para 2 casas decimais
+- **Discount Calculation**:
+  - Discount = (Original Price × Discount Percentage) ÷ 100
+  - Final Price = Original Price - Discount
+  - All values are rounded to 2 decimal places
 
-### 3. Validações de Segurança
-- **CRM Inativo**: Profissionais inativos não podem gerar descontos
-- **Receita Obrigatória**: Desconto só é aplicado com receita médica
-- **CRM Válido**: Apenas CRMs cadastrados no sistema são aceitos
-- **Formato CRM**: Validação de formato numérico (2-10 dígitos)
+### 3. Security Validations
+- **Inactive CRM**: Inactive professionals cannot generate discounts
+- **Prescription Required**: Discount is only applied with medical prescription
+- **Valid CRM**: Only CRMs registered in the system are accepted
+- **CRM Format**: Validation of numeric format (2-10 digits)
 
-## Fluxo de Venda com Desconto
+## Sales Flow with Discount
 
-### Passo a Passo:
-1. **Seleção de Medicamento**: Cliente escolhe o medicamento
-2. **Informações do Cliente**: Dados pessoais são preenchidos
-3. **Receita Médica**: Marcar checkbox "Vendido com Receita Médica"
-4. **Dados do Médico**: Preencher nome e CRM do médico
-5. **Validação CRM**: Sistema busca automaticamente o CRM
-6. **Aplicação do Desconto**: Desconto é calculado e aplicado
-7. **Confirmação**: Sistema mostra informações do desconto aplicado
-8. **Finalização**: Venda é registrada com preço final descontado
+### Step by Step:
+1. **Medication Selection**: Client chooses the medication
+2. **Client Information**: Personal data is filled in
+3. **Medical Prescription**: Check "Sold with Medical Prescription" checkbox
+4. **Doctor Data**: Fill in doctor's name and CRM
+5. **CRM Validation**: System automatically searches for the CRM
+6. **Discount Application**: Discount is calculated and applied
+7. **Confirmation**: System shows information about the applied discount
+8. **Finalization**: Sale is recorded with the discounted final price
 
-### Campos Adicionais na Venda:
-- `discount_percentage`: Percentual de desconto aplicado
-- `discount_applied`: Valor do desconto em reais
-- `original_price`: Preço original (quantidade × preço unitário)
-- `final_price`: Preço final após desconto
-- `total_price`: Preço total da venda (igual ao final_price)
+### Additional Fields in Sale:
+- `discount_percentage`: Applied discount percentage
+- `discount_applied`: Discount value in currency
+- `original_price`: Original price (quantity × unit price)
+- `final_price`: Final price after discount
+- `total_price`: Total sale price (same as final_price)
 
-## Interface do Usuário
+## User Interface
 
-### Tela de Venda:
-- **Campo CRM**: Com botão de busca integrado
-- **Resultado da Busca**: Mostra informações do médico encontrado
-- **Informações de Desconto**: Exibe detalhes do desconto aplicado
-- **Cálculo Automático**: Preço é recalculado automaticamente
+### Sales Screen:
+- **CRM Field**: With integrated search button
+- **Search Result**: Shows information about the found doctor
+- **Discount Information**: Displays details of the applied discount
+- **Automatic Calculation**: Price is automatically recalculated
 
-### Listagem de Vendas:
-- **Coluna Desconto**: Mostra percentual e valor do desconto
-- **Preço Total**: Exibe preço original riscado e preço final
-- **Informações do Médico**: CRM e nome do médico (se aplicável)
+### Sales Listing:
+- **Discount Column**: Shows discount percentage and value
+- **Total Price**: Displays original price crossed out and final price
+- **Doctor Information**: CRM and doctor's name (if applicable)
 
-## Relatórios e Consultas
+## Reports and Queries
 
-### Busca por CRM:
+### CRM Search:
 - Endpoint: `GET /medical_professionals/search_by_crm?crm=12345`
-- Retorna informações do profissional se encontrado
-- Usado para validação em tempo real durante a venda
+- Returns professional information if found
+- Used for real-time validation during sale
 
-### Filtros Disponíveis:
-- Por especialidade médica
-- Por cidade
-- Por status (ativo/inativo)
-- Busca por nome, CRM ou especialidade
+### Available Filters:
+- By medical specialty
+- By city
+- By status (active/inactive)
+- Search by name, CRM or specialty
 
-## Regras de Negócio Específicas
+## Specific Business Rules
 
-### 1. Aplicação de Desconto
-- ✅ **Permitido**: Venda com receita + CRM válido + Profissional ativo
-- ❌ **Não Permitido**: Venda sem receita
-- ❌ **Não Permitido**: CRM não cadastrado
-- ❌ **Não Permitido**: Profissional inativo
+### 1. Discount Application
+- ✅ **Allowed**: Sale with prescription + Valid CRM + Active Professional
+- ❌ **Not Allowed**: Sale without prescription
+- ❌ **Not Allowed**: Unregistered CRM
+- ❌ **Not Allowed**: Inactive professional
 
-### 2. Validações de CRM
-- Formato: Apenas números
-- Tamanho: 2 a 10 dígitos
-- Unicidade: CRM deve ser único no sistema
-- Status: Profissional deve estar ativo
+### 2. CRM Validations
+- Format: Numbers only
+- Size: 2 to 10 digits
+- Uniqueness: CRM must be unique in the system
+- Status: Professional must be active
 
-### 3. Cálculo de Preços
-- **Preço Original**: Quantidade × Preço Unitário
-- **Desconto**: (Preço Original × Percentual) ÷ 100
-- **Preço Final**: Preço Original - Desconto
-- **Arredondamento**: 2 casas decimais
+### 3. Price Calculation
+- **Original Price**: Quantity × Unit Price
+- **Discount**: (Original Price × Percentage) ÷ 100
+- **Final Price**: Original Price - Discount
+- **Rounding**: 2 decimal places
 
-### 4. Auditoria
-- Todas as vendas com desconto registram:
-  - CRM do médico
-  - Percentual de desconto aplicado
-  - Valor do desconto
-  - Preço original e final
-  - Data e hora da aplicação
+### 4. Auditing
+- All sales with discount record:
+  - Doctor's CRM
+  - Applied discount percentage
+  - Discount value
+  - Original and final price
+  - Application date and time
 
-## Exemplos Práticos
+## Practical Examples
 
-### Exemplo 1: Desconto de 15%
-- **Medicamento**: R$ 50,00
-- **Quantidade**: 2 unidades
-- **Preço Original**: R$ 100,00
-- **Desconto**: 15% = R$ 15,00
-- **Preço Final**: R$ 85,00
+### Example 1: 15% Discount
+- **Medication**: $50.00
+- **Quantity**: 2 units
+- **Original Price**: $100.00
+- **Discount**: 15% = $15.00
+- **Final Price**: $85.00
 
-### Exemplo 2: Desconto de 20%
-- **Medicamento**: R$ 75,00
-- **Quantidade**: 1 unidade
-- **Preço Original**: R$ 75,00
-- **Desconto**: 20% = R$ 15,00
-- **Preço Final**: R$ 60,00
+### Example 2: 20% Discount
+- **Medication**: $75.00
+- **Quantity**: 1 unit
+- **Original Price**: $75.00
+- **Discount**: 20% = $15.00
+- **Final Price**: $60.00
 
-## Manutenção e Configuração
+## Maintenance and Configuration
 
-### Gestão de Profissionais:
-- **Ativação/Desativação**: Controle de status do profissional
-- **Edição de Descontos**: Alteração de percentuais
-- **Histórico**: Rastreamento de mudanças
-- **Backup**: Dados são preservados mesmo quando inativo
+### Professional Management:
+- **Activation/Deactivation**: Professional status control
+- **Discount Editing**: Percentage changes
+- **History**: Change tracking
+- **Backup**: Data is preserved even when inactive
 
-### Configurações do Sistema:
-- **Limite de Desconto**: Máximo de 50%
-- **Validação de Formato**: Regex para CRM
-- **Cache**: Busca otimizada de profissionais
-- **Logs**: Registro de todas as operações
+### System Configuration:
+- **Discount Limit**: Maximum of 50%
+- **Format Validation**: Regex for CRM
+- **Cache**: Optimized professional search
+- **Logs**: Recording of all operations
 
-## Considerações Técnicas
+## Technical Considerations
 
 ### Performance:
-- Índices no banco para CRM e status
-- Cache de profissionais ativos
-- Validação em tempo real via AJAX
+- Database indexes for CRM and status
+- Cache of active professionals
+- Real-time validation via AJAX
 
-### Segurança:
-- Validação de entrada para CRM
-- Sanitização de dados
-- Controle de acesso por sessão
+### Security:
+- Input validation for CRM
+- Data sanitization
+- Session-based access control
 
-### Escalabilidade:
-- Modelo flexível para novos campos
-- API REST para integrações futuras
-- Estrutura preparada para múltiplas farmácias
+### Scalability:
+- Flexible model for new fields
+- REST API for future integrations
+- Structure prepared for multiple pharmacies
 
-## Conclusão
+## Conclusion
 
-O sistema de desconto médico implementado garante:
-- **Conformidade**: Apenas profissionais cadastrados geram descontos
-- **Transparência**: Cliente vê claramente o desconto aplicado
-- **Controle**: Gestão completa de profissionais e descontos
-- **Auditoria**: Rastreamento completo de todas as operações
-- **Flexibilidade**: Configuração individual de percentuais por médico
+The implemented medical discount system ensures:
+- **Compliance**: Only registered professionals generate discounts
+- **Transparency**: Client clearly sees the applied discount
+- **Control**: Complete management of professionals and discounts
+- **Auditing**: Complete tracking of all operations
+- **Flexibility**: Individual percentage configuration per doctor
 
-Este sistema atende às necessidades regulatórias e comerciais da farmácia, proporcionando uma experiência transparente para clientes e controle total para a gestão.
+This system meets the regulatory and commercial needs of the pharmacy, providing a transparent experience for clients and total control for management.
