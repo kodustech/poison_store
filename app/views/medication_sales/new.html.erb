@@ -1,0 +1,265 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header">
+          <h2>Nova Venda de Medicamento</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with(model: @sale, local: true) do |form| %>
+            <% if @sale.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@sale.errors.count, "erro") %> impediram esta venda de ser salva:</h4>
+                <ul>
+                  <% @sale.errors.full_messages.each do |msg| %>
+                    <li><%= msg %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :over_the_counter_medication_id, 'Medicamento', class: 'form-label' %>
+                  <%= form.select :over_the_counter_medication_id, 
+                      @medications.map { |m| ["#{m.name} - #{m.active_ingredient} (#{m.strength})", m.id] },
+                      { prompt: 'Selecione o medicamento' }, 
+                      { class: 'form-select', required: true } %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :sale_date, 'Data da Venda', class: 'form-label' %>
+                  <%= form.date_field :sale_date, class: 'form-control', value: Date.current, required: true %>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :customer_name, 'Nome do Cliente', class: 'form-label' %>
+                  <%= form.text_field :customer_name, class: 'form-control', required: true %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :customer_cpf, 'CPF do Cliente', class: 'form-label' %>
+                  <%= form.text_field :customer_cpf, class: 'form-control', required: true %>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :customer_phone, 'Telefone', class: 'form-label' %>
+                  <%= form.text_field :customer_phone, class: 'form-control', required: true %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <%= form.label :customer_email, 'E-mail', class: 'form-label' %>
+                  <%= form.email_field :customer_email, class: 'form-control', required: true %>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <%= form.label :quantity, 'Quantidade', class: 'form-label' %>
+                  <%= form.number_field :quantity, class: 'form-control', min: '1', required: true %>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <%= form.label :unit_price, 'Preço Unitário (R$)', class: 'form-label' %>
+                  <%= form.number_field :unit_price, class: 'form-control', step: '0.01', min: '0', required: true %>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="mb-3">
+                  <%= form.label :payment_method, 'Método de Pagamento', class: 'form-label' %>
+                  <%= form.select :payment_method, 
+                      ['Dinheiro', 'Cartão de Crédito', 'Cartão de Débito', 'PIX', 'Transferência'],
+                      { prompt: 'Selecione o método' }, 
+                      { class: 'form-select', required: true } %>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <%= form.check_box :sold_with_prescription, class: 'form-check-input', id: 'prescription_checkbox' %>
+                <%= form.label :sold_with_prescription, 'Vendido com Receita Médica', class: 'form-check-label', for: 'prescription_checkbox' %>
+              </div>
+            </div>
+
+            <div id="prescription_fields" style="display: none;">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <%= form.label :doctor_name, 'Nome do Médico', class: 'form-label' %>
+                    <%= form.text_field :doctor_name, class: 'form-control' %>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <%= form.label :doctor_crm, 'CRM do Médico', class: 'form-label' %>
+                    <div class="input-group">
+                      <%= form.text_field :doctor_crm, class: 'form-control', id: 'doctor_crm_field' %>
+                      <button type="button" class="btn btn-outline-primary" id="search_crm_btn">
+                        <i class="fas fa-search"></i> Buscar
+                      </button>
+                    </div>
+                    <div id="crm_search_result" class="mt-2"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Campos de desconto -->
+              <div id="discount_info" style="display: none;" class="mb-3">
+                <div class="alert alert-info">
+                  <h6>Desconto Médico Aplicado</h6>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <strong>Médico:</strong> <span id="doctor_name_display"></span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Especialidade:</strong> <span id="specialty_display"></span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>Desconto:</strong> <span id="discount_percentage_display"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <%= form.label :prescription_reference, 'Referência da Receita', class: 'form-label' %>
+                <%= form.text_field :prescription_reference, class: 'form-control', placeholder: 'Número ou código da receita' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :notes, 'Observações', class: 'form-label' %>
+              <%= form.text_area :notes, class: 'form-control', rows: 3, placeholder: 'Observações adicionais sobre a venda' %>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Voltar', medication_sales_path, class: 'btn btn-secondary' %>
+              <%= form.submit 'Registrar Venda', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const prescriptionCheckbox = document.getElementById('prescription_checkbox');
+  const prescriptionFields = document.getElementById('prescription_fields');
+  const searchCrmBtn = document.getElementById('search_crm_btn');
+  const doctorCrmField = document.getElementById('doctor_crm_field');
+  const crmSearchResult = document.getElementById('crm_search_result');
+  const discountInfo = document.getElementById('discount_info');
+  
+  // Controle dos campos de receita
+  prescriptionCheckbox.addEventListener('change', function() {
+    if (this.checked) {
+      prescriptionFields.style.display = 'block';
+    } else {
+      prescriptionFields.style.display = 'none';
+      // Limpar desconto se não houver receita
+      discountInfo.style.display = 'none';
+      crmSearchResult.innerHTML = '';
+    }
+  });
+  
+  // Busca de CRM
+  searchCrmBtn.addEventListener('click', function() {
+    const crm = doctorCrmField.value.trim();
+    if (!crm) {
+      showCrmResult('Por favor, digite um CRM válido.', 'danger');
+      return;
+    }
+    
+    searchCrm(crm);
+  });
+  
+  // Busca automática ao pressionar Enter no campo CRM
+  doctorCrmField.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      searchCrmBtn.click();
+    }
+  });
+  
+  function searchCrm(crm) {
+    fetch(`/medical_professionals/search_by_crm?crm=${encodeURIComponent(crm)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          showCrmResult(`CRM encontrado: ${data.professional.name} (${data.professional.specialty})`, 'success');
+          showDiscountInfo(data.professional);
+        } else {
+          showCrmResult(data.message || 'CRM não encontrado', 'danger');
+          hideDiscountInfo();
+        }
+      })
+      .catch(error => {
+        console.error('Erro na busca:', error);
+        showCrmResult('Erro ao buscar CRM. Tente novamente.', 'danger');
+        hideDiscountInfo();
+      });
+  }
+  
+  function showCrmResult(message, type) {
+    crmSearchResult.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+  }
+  
+  function showDiscountInfo(professional) {
+    document.getElementById('doctor_name_display').textContent = professional.name;
+    document.getElementById('specialty_display').textContent = professional.specialty;
+    document.getElementById('discount_percentage_display').textContent = `${professional.discount_percentage}%`;
+    discountInfo.style.display = 'block';
+  }
+  
+  function hideDiscountInfo() {
+    discountInfo.style.display = 'none';
+  }
+  
+  // Cálculo automático de preço com desconto
+  const quantityField = document.querySelector('input[name="medication_sale[quantity]"]');
+  const unitPriceField = document.querySelector('input[name="medication_sale[unit_price]"]');
+  
+  function updatePriceCalculation() {
+    const quantity = parseInt(quantityField.value) || 0;
+    const unitPrice = parseFloat(unitPriceField.value) || 0;
+    
+    if (quantity > 0 && unitPrice > 0) {
+      const originalPrice = quantity * unitPrice;
+      const discountInfo = document.getElementById('discount_info');
+      
+      if (discountInfo.style.display !== 'none') {
+        const discountPercentage = parseFloat(document.getElementById('discount_percentage_display').textContent) || 0;
+        const discountAmount = (originalPrice * discountPercentage / 100);
+        const finalPrice = originalPrice - discountAmount;
+        
+        // Atualizar campos de preço se existirem
+        const totalPriceField = document.querySelector('input[name="medication_sale[total_price]"]');
+        if (totalPriceField) {
+          totalPriceField.value = finalPrice.toFixed(2);
+        }
+      }
+    }
+  }
+  
+  quantityField.addEventListener('input', updatePriceCalculation);
+  unitPriceField.addEventListener('input', updatePriceCalculation);
+});
+</script>

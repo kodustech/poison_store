@@ -1,0 +1,147 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2><%= @medical_professional.name %></h2>
+          <div>
+            <%= link_to 'Editar', edit_medical_professional_path(@medical_professional), class: 'btn btn-warning me-2' %>
+            <%= link_to 'Voltar', medical_professionals_path, class: 'btn btn-secondary' %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="card-title">Informações Profissionais</h5>
+              <dl class="row">
+                <dt class="col-sm-4">CRM:</dt>
+                <dd class="col-sm-8">
+                  <span class="badge bg-info fs-6"><%= @medical_professional.crm %></span>
+                </dd>
+
+                <dt class="col-sm-4">Especialidade:</dt>
+                <dd class="col-sm-8"><%= @medical_professional.specialty %></dd>
+
+                <dt class="col-sm-4">Desconto:</dt>
+                <dd class="col-sm-8">
+                  <span class="badge bg-success fs-6">
+                    <%= number_to_percentage(@medical_professional.discount_percentage, precision: 1) %>
+                  </span>
+                </dd>
+
+                <dt class="col-sm-4">Status:</dt>
+                <dd class="col-sm-8">
+                  <% if @medical_professional.active? %>
+                    <span class="badge bg-success">Ativo</span>
+                  <% else %>
+                    <span class="badge bg-danger">Inativo</span>
+                  <% end %>
+                </dd>
+              </dl>
+            </div>
+
+            <div class="col-md-6">
+              <h5 class="card-title">Informações de Contato</h5>
+              <dl class="row">
+                <% if @medical_professional.phone.present? %>
+                  <dt class="col-sm-4">Telefone:</dt>
+                  <dd class="col-sm-8"><%= @medical_professional.phone %></dd>
+                <% end %>
+
+                <% if @medical_professional.email.present? %>
+                  <dt class="col-sm-4">E-mail:</dt>
+                  <dd class="col-sm-8">
+                    <a href="mailto:<%= @medical_professional.email %>"><%= @medical_professional.email %></a>
+                  </dd>
+                <% end %>
+
+                <% if @medical_professional.address.present? %>
+                  <dt class="col-sm-4">Endereço:</dt>
+                  <dd class="col-sm-8"><%= @medical_professional.full_address %></dd>
+                <% end %>
+              </dl>
+            </div>
+          </div>
+
+          <% if @medical_professional.notes.present? %>
+            <div class="row mt-3">
+              <div class="col-12">
+                <h5 class="card-title">Observações</h5>
+                <p class="card-text"><%= @medical_professional.notes %></p>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="row mt-4">
+            <div class="col-12">
+              <h5 class="card-title">Exemplo de Desconto</h5>
+              <div class="alert alert-info">
+                <strong>Como funciona o desconto:</strong><br>
+                Para um medicamento de R$ 100,00, o desconto seria de 
+                <strong>R$ <%= @medical_professional.discount_amount(100.00) %></strong>, 
+                resultando em um preço final de 
+                <strong>R$ <%= @medical_professional.final_price_with_discount(100.00) %></strong>.
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-12">
+              <small class="text-muted">
+                Cadastrado em: <%= @medical_professional.created_at.strftime("%d/%m/%Y às %H:%M") %><br>
+                Última atualização: <%= @medical_professional.updated_at.strftime("%d/%m/%Y às %H:%M") %>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <%= link_to 'Editar Profissional', edit_medical_professional_path(@medical_professional), class: 'btn btn-warning' %>
+            <%= link_to 'Listar Todos', medical_professionals_path, class: 'btn btn-outline-primary' %>
+            <%= link_to 'Novo Profissional', new_medical_professional_path, class: 'btn btn-primary' %>
+            
+            <% if @medical_professional.active? %>
+              <%= link_to 'Desativar', '#', 
+                  class: 'btn btn-outline-danger',
+                  data: { 
+                    confirm: 'Tem certeza que deseja desativar este profissional? Ele não poderá mais gerar descontos.' 
+                  } %>
+            <% else %>
+              <%= link_to 'Reativar', '#', 
+                  class: 'btn btn-outline-success',
+                  data: { 
+                    confirm: 'Tem certeza que deseja reativar este profissional? Ele poderá gerar descontos novamente.' 
+                  } %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5>Informações do Sistema</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+            <strong>CRM:</strong> <%= @medical_professional.crm %><br>
+            <strong>ID:</strong> <%= @medical_professional.id %><br>
+            <strong>Status:</strong> 
+            <% if @medical_professional.active? %>
+              <span class="text-success">Ativo</span>
+            <% else %>
+              <span class="text-danger">Inativo</span>
+            <% end %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
