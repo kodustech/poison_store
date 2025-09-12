@@ -162,3 +162,5 @@ The implemented medical discount system ensures:
 - **Flexibility**: Individual percentage configuration per doctor
 
 This system meets the regulatory and commercial needs of the pharmacy, providing a transparent experience for clients and total control for management.
+
+This is better rule
