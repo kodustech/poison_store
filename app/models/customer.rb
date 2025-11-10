@@ -8,8 +8,6 @@ class Customer
   field :phone, type: String
   field :zip_code, type: String
   field :address, type: Hash
-  field :rules, type: Array
-  field :actions, type: Array
 
   validates :name, :cpf, :email, presence: true
   validates :cpf, uniqueness: true
