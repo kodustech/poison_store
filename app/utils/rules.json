@@ -1,0 +1,20 @@
+{ 
+    "rules": [
+        {
+            "id": 1,
+            "name": "Rule 1",
+            "description": "Rule 1 description",
+            "condition": "Condition 1",
+            "action": "Action 1"
+        }
+    ],
+    "actions": [
+        {
+            "id": 1,
+            "name": "Action 1",
+            "description": "Action 1 description",
+            "condition": "Condition 1",
+            "action": "Action 1"
+        }
+    ]
+}
