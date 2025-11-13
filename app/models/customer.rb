@@ -8,6 +8,13 @@ class Customer
   field :phone, type: String
   field :zip_code, type: String
   field :address, type: Hash
+  field :district, type: String
+  field :city, type: String
+  field :state, type: String
+  field :address_number, type: String
+  field :complement, type: String
+  field :reference, type: String
+  field :notes, type: String
 
   validates :name, :cpf, :email, presence: true
   validates :cpf, uniqueness: true
