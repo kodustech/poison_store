@@ -10,4 +10,11 @@ class Employee
   field :city, type: String
   field :state, type: String
   field :zip_code, type: String
+  field :department, type: String
+  field :role, type: String
+  field :salary, type: Float
+  field :hire_date, type: Date
+  field :status, type: String
+  field :created_at, type: DateTime
+  field :updated_at, type: DateTime
 end
