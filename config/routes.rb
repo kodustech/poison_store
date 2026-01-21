@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   resources :medication_requests, only: [:new, :create]
   
   resources :over_the_counter_medications
+  resources :supplements
   resources :medication_sales
   
   resources :medical_professionals do
