@@ -1,0 +1,116 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header">
+          <h2>Novo Remédio Fitoterápico</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @herbal_medicine, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @herbal_medicine.errors.any? %>
+              <div class="alert alert-danger">
+                <h4>Erros encontrados:</h4>
+                <ul>
+                  <% @herbal_medicine.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :commercial_name, 'Nome Comercial *', class: 'form-label' %>
+                <%= form.text_field :commercial_name, class: 'form-control', required: true, placeholder: 'Nome comercial do produto' %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :scientific_name, 'Nome Científico da Planta *', class: 'form-label' %>
+                <%= form.text_field :scientific_name, class: 'form-control', required: true, placeholder: 'Ex: Aloe vera, Ginkgo biloba' %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :plant_part, 'Parte da Planta Utilizada *', class: 'form-label' %>
+                <%= form.select :plant_part, [
+                  ['Folhas', 'Folhas'],
+                  ['Raiz', 'Raiz'],
+                  ['Casca', 'Casca'],
+                  ['Flores', 'Flores'],
+                  ['Frutos', 'Frutos'],
+                  ['Sementes', 'Sementes'],
+                  ['Caule', 'Caule'],
+                  ['Toda a planta', 'Toda a planta']
+                ], { prompt: 'Selecione a parte da planta' }, class: 'form-select', required: true %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :dosage_form, 'Forma Farmacêutica *', class: 'form-label' %>
+                <%= form.select :dosage_form, [
+                  ['Cápsula', 'Cápsula'],
+                  ['Comprimido', 'Comprimido'],
+                  ['Tintura', 'Tintura'],
+                  ['Extrato', 'Extrato'],
+                  ['Chá', 'Chá'],
+                  ['Pomada', 'Pomada'],
+                  ['Xarope', 'Xarope'],
+                  ['Gotas', 'Gotas']
+                ], { prompt: 'Selecione a forma farmacêutica' }, class: 'form-select', required: true %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :price, 'Preço *', class: 'form-label' %>
+                <%= form.number_field :price, class: 'form-control', required: true, min: 0, step: 0.01, placeholder: '0.00' %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :manufacturer, 'Fabricante *', class: 'form-label' %>
+                <%= form.text_field :manufacturer, class: 'form-control', required: true, placeholder: 'Nome do fabricante' %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :stock_quantity, 'Quantidade em Estoque', class: 'form-label' %>
+                <%= form.number_field :stock_quantity, class: 'form-control', min: 0, value: @herbal_medicine.stock_quantity || 0 %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :minimum_stock, 'Estoque Mínimo', class: 'form-label' %>
+                <%= form.number_field :minimum_stock, class: 'form-control', min: 0, value: @herbal_medicine.minimum_stock || 10 %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :description, 'Descrição', class: 'form-label' %>
+              <%= form.text_area :description, class: 'form-control', rows: 3, placeholder: 'Descrição geral do produto fitoterápico' %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :therapeutic_indications, 'Indicações Terapêuticas', class: 'form-label' %>
+              <%= form.text_area :therapeutic_indications, class: 'form-control', rows: 3, placeholder: 'Para que serve este fitoterápico' %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :contraindications, 'Contraindicações', class: 'form-label' %>
+              <%= form.text_area :contraindications, class: 'form-control', rows: 2, placeholder: 'Quando não deve ser usado' %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :drug_interactions, 'Interações Medicamentosas', class: 'form-label' %>
+              <%= form.text_area :drug_interactions, class: 'form-control', rows: 2, placeholder: 'Interações com outros medicamentos' %>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Voltar', herbal_medicines_path, class: 'btn btn-secondary' %>
+              <%= form.submit 'Cadastrar Fitoterápico', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
