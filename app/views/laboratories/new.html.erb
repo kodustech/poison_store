@@ -1,0 +1,129 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Novo Laboratório</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @laboratory, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @laboratory.errors.any? %>
+              <div class="alert alert-danger">
+                <h4>Erros encontrados:</h4>
+                <ul>
+                  <% @laboratory.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <%= form.label :name, 'Nome do Laboratório *', class: 'form-label' %>
+                <%= form.text_field :name, class: 'form-control', required: true, placeholder: 'Nome completo do laboratório' %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :cnpj, 'CNPJ *', class: 'form-label' %>
+                <%= form.text_field :cnpj, class: 'form-control', required: true, placeholder: '00.000.000/0000-00' %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :contact_person, 'Pessoa de Contato', class: 'form-label' %>
+                <%= form.text_field :contact_person, class: 'form-control', placeholder: 'Nome do responsável' %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :phone, 'Telefone', class: 'form-label' %>
+                <%= form.telephone_field :phone, class: 'form-control', placeholder: '(11) 99999-9999' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :email, 'E-mail', class: 'form-label' %>
+              <%= form.email_field :email, class: 'form-control', placeholder: 'email@laboratorio.com' %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :zip_code, 'CEP', class: 'form-label' %>
+              <%= form.text_field :zip_code, class: 'form-control', placeholder: '00000-000', id: 'laboratory_zip_code' %>
+              <div class="form-text">O endereço será preenchido automaticamente ao informar o CEP</div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :city, 'Cidade', class: 'form-label' %>
+                <%= form.text_field :city, class: 'form-control', placeholder: 'Cidade', id: 'laboratory_city' %>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <%= form.label :state, 'Estado', class: 'form-label' %>
+                <%= form.select :state, [
+                  ['Acre', 'AC'], ['Alagoas', 'AL'], ['Amapá', 'AP'], ['Amazonas', 'AM'],
+                  ['Bahia', 'BA'], ['Ceará', 'CE'], ['Distrito Federal', 'DF'], ['Espírito Santo', 'ES'],
+                  ['Goiás', 'GO'], ['Maranhão', 'MA'], ['Mato Grosso', 'MT'], ['Mato Grosso do Sul', 'MS'],
+                  ['Minas Gerais', 'MG'], ['Pará', 'PA'], ['Paraíba', 'PB'], ['Paraná', 'PR'],
+                  ['Pernambuco', 'PE'], ['Piauí', 'PI'], ['Rio de Janeiro', 'RJ'], ['Rio Grande do Norte', 'RN'],
+                  ['Rio Grande do Sul', 'RS'], ['Rondônia', 'RO'], ['Roraima', 'RR'], ['Santa Catarina', 'SC'],
+                  ['São Paulo', 'SP'], ['Sergipe', 'SE'], ['Tocantins', 'TO']
+                ], { prompt: 'Selecione o estado' }, class: 'form-select', id: 'laboratory_state' %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :notes, 'Observações', class: 'form-label' %>
+              <%= form.text_area :notes, class: 'form-control', rows: 3, placeholder: 'Informações adicionais sobre o laboratório' %>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <%= form.check_box :active, class: 'form-check-input', checked: true %>
+                <%= form.label :active, 'Laboratório ativo', class: 'form-check-label' %>
+                <div class="form-text">Laboratórios inativos não aparecerão nas listagens de seleção</div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Voltar', laboratories_path, class: 'btn btn-secondary' %>
+              <%= form.submit 'Cadastrar Laboratório', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Auto-preenchimento de endereço via CEP
+  document.addEventListener('DOMContentLoaded', function() {
+    const zipCodeField = document.getElementById('laboratory_zip_code');
+    const cityField = document.getElementById('laboratory_city');
+    const stateField = document.getElementById('laboratory_state');
+    
+    if (zipCodeField) {
+      zipCodeField.addEventListener('blur', function() {
+        const zipCode = this.value.replace(/\D/g, '');
+        
+        if (zipCode.length === 8) {
+          fetch(`https://viacep.com.br/ws/${zipCode}/json/`)
+            .then(response => response.json())
+            .then(data => {
+              if (!data.erro) {
+                if (cityField) cityField.value = data.localidade || '';
+                if (stateField) {
+                  const option = Array.from(stateField.options).find(opt => opt.value === data.uf);
+                  if (option) stateField.value = data.uf;
+                }
+              }
+            })
+            .catch(error => console.error('Erro ao buscar CEP:', error));
+        }
+      });
+    }
+  });
+</script>
+
