@@ -9,6 +9,7 @@ class Potion
   field :ingredients, type: Array
 
   has_and_belongs_to_many :suppliers
+  has_and_belongs_to_many :laboratories
 
   validates :name, :price, presence: true
   validates :price, numericality: { greater_than: 0 }

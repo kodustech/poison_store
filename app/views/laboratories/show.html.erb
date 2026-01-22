@@ -1,0 +1,185 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2><%= @laboratory.name %></h2>
+          <div>
+            <%= link_to 'Editar', edit_laboratory_path(@laboratory), class: 'btn btn-warning me-2' %>
+            <%= link_to 'Voltar', laboratories_path, class: 'btn btn-secondary' %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="card-title">Informações do Laboratório</h5>
+              <dl class="row">
+                <dt class="col-sm-4">CNPJ:</dt>
+                <dd class="col-sm-8"><%= @laboratory.cnpj %></dd>
+
+                <dt class="col-sm-4">Status:</dt>
+                <dd class="col-sm-8">
+                  <% if @laboratory.active? %>
+                    <span class="badge bg-success">Ativo</span>
+                  <% else %>
+                    <span class="badge bg-danger">Inativo</span>
+                  <% end %>
+                </dd>
+
+                <% if @laboratory.contact_person.present? %>
+                  <dt class="col-sm-4">Contato:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.contact_person %></dd>
+                <% end %>
+
+                <% if @laboratory.phone.present? %>
+                  <dt class="col-sm-4">Telefone:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.phone %></dd>
+                <% end %>
+
+                <% if @laboratory.email.present? %>
+                  <dt class="col-sm-4">E-mail:</dt>
+                  <dd class="col-sm-8">
+                    <a href="mailto:<%= @laboratory.email %>"><%= @laboratory.email %></a>
+                  </dd>
+                <% end %>
+              </dl>
+            </div>
+
+            <div class="col-md-6">
+              <h5 class="card-title">Endereço</h5>
+              <dl class="row">
+                <% if @laboratory.full_address.present? %>
+                  <dt class="col-sm-4">Endereço:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.full_address %></dd>
+                <% end %>
+
+                <% if @laboratory.zip_code.present? %>
+                  <dt class="col-sm-4">CEP:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.zip_code %></dd>
+                <% end %>
+
+                <% if @laboratory.city.present? %>
+                  <dt class="col-sm-4">Cidade:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.city %></dd>
+                <% end %>
+
+                <% if @laboratory.state.present? %>
+                  <dt class="col-sm-4">Estado:</dt>
+                  <dd class="col-sm-8"><%= @laboratory.state %></dd>
+                <% end %>
+              </dl>
+            </div>
+          </div>
+
+          <% if @laboratory.notes.present? %>
+            <div class="row mt-3">
+              <div class="col-12">
+                <h5 class="card-title">Observações</h5>
+                <p class="card-text"><%= @laboratory.notes %></p>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="row mt-4">
+            <div class="col-12">
+              <h5 class="card-title">Medicamentos Fornecidos</h5>
+              <% if @laboratory.potions.any? %>
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover">
+                    <thead>
+                      <tr>
+                        <th>Nome</th>
+                        <th>Preço</th>
+                        <th>Efeitos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% @laboratory.potions.each do |potion| %>
+                        <tr>
+                          <td><strong><%= potion.name %></strong></td>
+                          <td>R$ <%= number_with_precision(potion.price, precision: 2) %></td>
+                          <td>
+                            <% if potion.effects.present? %>
+                              <%= potion.effects.join(', ') %>
+                            <% else %>
+                              <span class="text-muted">-</span>
+                            <% end %>
+                          </td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="text-muted">
+                  <small>Total: <strong><%= @laboratory.potions.count %></strong> medicamento(s)</small>
+                </p>
+              <% else %>
+                <div class="alert alert-info">
+                  <p class="mb-0">Este laboratório ainda não está vinculado a nenhum medicamento.</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="row mt-3">
+            <div class="col-12">
+              <small class="text-muted">
+                Cadastrado em: <%= @laboratory.created_at.strftime("%d/%m/%Y às %H:%M") %><br>
+                Última atualização: <%= @laboratory.updated_at.strftime("%d/%m/%Y às %H:%M") %>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <%= link_to 'Editar Laboratório', edit_laboratory_path(@laboratory), class: 'btn btn-warning' %>
+            <%= link_to 'Listar Todos', laboratories_path, class: 'btn btn-outline-primary' %>
+            <%= link_to 'Novo Laboratório', new_laboratory_path, class: 'btn btn-primary' %>
+            
+            <% if @laboratory.active? %>
+              <%= link_to 'Desativar', '#', 
+                  class: 'btn btn-outline-danger',
+                  data: { 
+                    confirm: 'Tem certeza que deseja desativar este laboratório?' 
+                  } %>
+            <% else %>
+              <%= link_to 'Reativar', '#', 
+                  class: 'btn btn-outline-success',
+                  data: { 
+                    confirm: 'Tem certeza que deseja reativar este laboratório?' 
+                  } %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5>Informações do Sistema</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">
+            <strong>CNPJ:</strong> <%= @laboratory.cnpj %><br>
+            <strong>ID:</strong> <%= @laboratory.id %><br>
+            <strong>Status:</strong> 
+            <% if @laboratory.active? %>
+              <span class="text-success">Ativo</span>
+            <% else %>
+              <span class="text-danger">Inativo</span>
+            <% end %><br>
+            <strong>Medicamentos:</strong> <%= @laboratory.potions.count %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
