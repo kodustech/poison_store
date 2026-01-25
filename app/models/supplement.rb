@@ -18,6 +18,7 @@ class Supplement
   field :minimum_stock, type: Integer, default: 10
 
   has_many :medication_sales
+  has_many :promotions
 
   validates :name, presence: true, uniqueness: true
   validates :supplement_type, presence: true
