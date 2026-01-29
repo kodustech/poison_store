@@ -163,5 +163,4 @@ The implemented medical discount system ensures:
 
 This system meets the regulatory and commercial needs of the pharmacy, providing a transparent experience for clients and total control for management.
 
-This is third rule
 @kody-ignore
