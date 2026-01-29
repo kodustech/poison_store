@@ -1,0 +1,119 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2><i class="bi bi-droplet-half"></i> <%= @perfumery_product.name %></h2>
+          <div>
+            <%= link_to 'Editar', edit_perfumery_product_path(@perfumery_product), class: 'btn btn-warning me-2' %>
+            <%= link_to 'Voltar', perfumery_products_path, class: 'btn btn-secondary' %>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="card-title">Informações do Produto</h5>
+              <dl class="row">
+                <dt class="col-sm-4">Marca:</dt>
+                <dd class="col-sm-8"><%= @perfumery_product.brand %></dd>
+
+                <dt class="col-sm-4">Categoria:</dt>
+                <dd class="col-sm-8"><%= @perfumery_product.category %></dd>
+
+                <% if @perfumery_product.volume_ml.present? %>
+                  <dt class="col-sm-4">Volume:</dt>
+                  <dd class="col-sm-8"><%= @perfumery_product.volume_ml %> ml</dd>
+                <% end %>
+
+                <% if @perfumery_product.fragrance_type.present? %>
+                  <dt class="col-sm-4">Tipo de fragrância:</dt>
+                  <dd class="col-sm-8"><%= @perfumery_product.fragrance_type %></dd>
+                <% end %>
+
+                <dt class="col-sm-4">Preço:</dt>
+                <dd class="col-sm-8"><strong>R$ <%= number_with_precision(@perfumery_product.price, precision: 2) %></strong></dd>
+
+                <dt class="col-sm-4">Estoque:</dt>
+                <dd class="col-sm-8">
+                  <% if @perfumery_product.low_stock? %>
+                    <span class="badge bg-warning"><%= @perfumery_product.stock_quantity %> unidades (estoque baixo)</span>
+                  <% else %>
+                    <span class="badge bg-success"><%= @perfumery_product.stock_quantity %> unidades</span>
+                  <% end %>
+                </dd>
+
+                <dt class="col-sm-4">Status:</dt>
+                <dd class="col-sm-8">
+                  <% if @perfumery_product.active? %>
+                    <span class="badge bg-success">Ativo</span>
+                  <% else %>
+                    <span class="badge bg-danger">Inativo</span>
+                  <% end %>
+                </dd>
+
+                <% if @perfumery_product.manufacturer.present? %>
+                  <dt class="col-sm-4">Fabricante:</dt>
+                  <dd class="col-sm-8"><%= @perfumery_product.manufacturer %></dd>
+                <% end %>
+
+                <% if @perfumery_product.barcode.present? %>
+                  <dt class="col-sm-4">Código de barras:</dt>
+                  <dd class="col-sm-8"><%= @perfumery_product.barcode %></dd>
+                <% end %>
+              </dl>
+            </div>
+          </div>
+
+          <% if @perfumery_product.description.present? %>
+            <div class="row mt-3">
+              <div class="col-12">
+                <h5 class="card-title">Descrição</h5>
+                <p class="card-text"><%= @perfumery_product.description %></p>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="row mt-3">
+            <div class="col-12">
+              <small class="text-muted">
+                Cadastrado em: <%= @perfumery_product.created_at.strftime("%d/%m/%Y às %H:%M") %><br>
+                Última atualização: <%= @perfumery_product.updated_at.strftime("%d/%m/%Y às %H:%M") %>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-grid gap-2">
+            <%= link_to 'Editar Produto', edit_perfumery_product_path(@perfumery_product), class: 'btn btn-warning' %>
+            <%= link_to 'Listar Todos', perfumery_products_path, class: 'btn btn-outline-primary' %>
+            <%= link_to 'Novo Produto', new_perfumery_product_path, class: 'btn btn-primary' %>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5>Disponibilidade</h5>
+        </div>
+        <div class="card-body">
+          <% if @perfumery_product.available_for_sale? %>
+            <p class="mb-0 text-success"><i class="bi bi-check-circle"></i> Disponível para venda</p>
+          <% elsif !@perfumery_product.in_stock? %>
+            <p class="mb-0 text-danger"><i class="bi bi-x-circle"></i> Sem estoque</p>
+          <% else %>
+            <p class="mb-0 text-warning"><i class="bi bi-dash-circle"></i> Produto inativo</p>
+          <% end %>
+          <p class="mb-0 mt-2 text-muted small">Estoque mínimo: <%= @perfumery_product.minimum_stock %> unidades</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
