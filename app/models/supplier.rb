@@ -8,6 +8,10 @@ class Supplier
   field :phone, type: String
   field :zip_code, type: String
   field :address, type: Hash
+  field :active, type: Boolean, default: true
+  field :notes, type: String
+  field :certificate_number, type: String
+  field :certificate_expiration, type: DateTime
 
   has_and_belongs_to_many :potions
 
