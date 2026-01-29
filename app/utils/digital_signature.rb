@@ -9,6 +9,8 @@ module DigitalSignature
       "#{manager.email}#{signature_params[:timestamp]}#{manager.signature_secret}"
     )
 
+    puts "stored_hash: #{stored_hash}"
+    puts "signature_params[:signature_hash]: #{signature_params[:signature_hash]}"
     signature_params[:signature_hash] == stored_hash
   end
 end 
