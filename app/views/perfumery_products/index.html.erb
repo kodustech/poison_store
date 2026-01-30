@@ -64,7 +64,15 @@
                           <span class="text-muted">-</span>
                         <% end %>
                       </td>
-                      <td>R$ <%= number_with_precision(product.price, precision: 2) %></td>
+                      <td>
+                        <% if product.has_discount? %>
+                          <span class="text-decoration-line-through text-muted small">R$ <%= number_with_precision(product.price, precision: 2) %></span>
+                          <strong class="text-success ms-1">R$ <%= number_with_precision(product.price_with_discount, precision: 2) %></strong>
+                          <span class="badge bg-info ms-1"><%= number_to_percentage(product.discount_percentage, precision: 0) %> off</span>
+                        <% else %>
+                          R$ <%= number_with_precision(product.price, precision: 2) %>
+                        <% end %>
+                      </td>
                       <td>
                         <% if product.low_stock? %>
                           <span class="badge bg-warning"><%= product.stock_quantity %></span>

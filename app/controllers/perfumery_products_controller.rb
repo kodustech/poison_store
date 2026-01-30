@@ -67,7 +67,7 @@ class PerfumeryProductsController < ApplicationController
   def perfumery_product_params
     params.require(:perfumery_product).permit(
       :name, :description, :category, :brand, :volume_ml, :fragrance_type,
-      :price, :stock_quantity, :minimum_stock, :manufacturer, :barcode, :is_active
+      :price, :discount_percentage, :stock_quantity, :minimum_stock, :manufacturer, :barcode, :is_active
     )
   end
 end

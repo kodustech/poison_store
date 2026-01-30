@@ -31,7 +31,16 @@
                 <% end %>
 
                 <dt class="col-sm-4">Preço:</dt>
-                <dd class="col-sm-8"><strong>R$ <%= number_with_precision(@perfumery_product.price, precision: 2) %></strong></dd>
+                <dd class="col-sm-8">
+                  <% if @perfumery_product.has_discount? %>
+                    <span class="text-decoration-line-through text-muted">R$ <%= number_with_precision(@perfumery_product.price, precision: 2) %></span>
+                    <strong class="text-success ms-2">R$ <%= number_with_precision(@perfumery_product.price_with_discount, precision: 2) %></strong>
+                    <span class="badge bg-info ms-1"><%= number_to_percentage(@perfumery_product.discount_percentage, precision: 1) %> de desconto</span>
+                    <br><small class="text-muted">Economia de R$ <%= number_with_precision(@perfumery_product.discount_amount, precision: 2) %></small>
+                  <% else %>
+                    <strong>R$ <%= number_with_precision(@perfumery_product.price, precision: 2) %></strong>
+                  <% end %>
+                </dd>
 
                 <dt class="col-sm-4">Estoque:</dt>
                 <dd class="col-sm-8">

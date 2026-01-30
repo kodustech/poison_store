@@ -9,6 +9,7 @@ class PerfumeryProduct
   field :volume_ml, type: Integer
   field :fragrance_type, type: String
   field :price, type: Float
+  field :discount_percentage, type: Float, default: 0.0
   field :stock_quantity, type: Integer, default: 0
   field :minimum_stock, type: Integer, default: 5
   field :manufacturer, type: String
@@ -22,6 +23,7 @@ class PerfumeryProduct
   validates :stock_quantity, numericality: { greater_than_or_equal_to: 0 }
   validates :minimum_stock, numericality: { greater_than_or_equal_to: 0 }
   validates :volume_ml, numericality: { greater_than: 0 }, allow_blank: true
+  validates :discount_percentage, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 100 }, allow_blank: true
 
   scope :active, -> { where(is_active: true) }
   scope :by_category, ->(cat) { where(category: cat) }
@@ -66,5 +68,21 @@ class PerfumeryProduct
 
   def active?
     is_active == true
+  end
+
+  # Desconto: percentual opcional (0 a 100). Quando > 0, o preço exibido considera o desconto.
+  def has_discount?
+    discount_percentage.present? && discount_percentage > 0
+  end
+
+  def discount_amount
+    return 0.0 unless price.present? && has_discount?
+    (price * discount_percentage / 100.0).round(2)
+  end
+
+  def price_with_discount
+    return price unless price.present?
+    return price unless has_discount?
+    (price - discount_amount).round(2)
   end
 end
