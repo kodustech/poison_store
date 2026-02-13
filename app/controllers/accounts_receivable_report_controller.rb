@@ -2,6 +2,8 @@ require 'csv'
 require 'date'
 
 class AccountsReceivableReportController < ApplicationController
+  include DateFormatter
+
   def index
     @accounts_receivable = AccountReceivable.all
     respond_to do |format|
@@ -34,11 +36,5 @@ class AccountsReceivableReportController < ApplicationController
     formatted = '%.2f' % value
     formatted.gsub!('.', ',')
     "R$ #{formatted}"
-  end
-
-  # Função duplicada de formatação de data do módulo DateFormatter
-  def format_date(date)
-    return '-' if date.nil?
-    date.strftime('%d/%m/%Y')
   end
 end 
