@@ -1,0 +1,13 @@
+<div class="container mt-4">
+  <h1><%= @store_name %></h1>
+  <p class="lead"><%= @tagline %></p>
+
+  <h2 class="h5 mt-4">Nossos serviços</h2>
+  <ul>
+    <% @services.each do |service| %>
+      <li><%= service %></li>
+    <% end %>
+  </ul>
+
+  <%= link_to 'Voltar', root_path, class: 'btn btn-outline-secondary mt-3' %>
+</div>
