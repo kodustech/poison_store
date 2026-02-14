@@ -20,6 +20,7 @@ Rails.application.routes.draw do
   end
   
   get 'monthly_sales_report', to: 'monthly_sales_report#index'
-  
+  get 'activity_report', to: 'activity_report#index'
+
   root 'medication_requests#new'
 end 
