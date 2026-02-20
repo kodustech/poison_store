@@ -3,7 +3,6 @@
 class UserApiService
   BASE_URL = "https://api.example.com/users"
 
-  # Trecho A — já existia: estabelece o padrão de encode e error handling
   def get_user(id)
     encoded_id = ERB::Util.url_encode(id)
     res = HTTParty.get("#{BASE_URL}/#{encoded_id}")
@@ -13,7 +12,6 @@ class UserApiService
     res.parsed_response
   end
 
-  # Trecho B — adicionado no PR: sem encode no id (path traversal), erro genérico (quebra o contrato)
   def delete_user(id)
     res = HTTParty.delete("#{BASE_URL}/#{id}")
     unless res.success?
@@ -32,7 +30,6 @@ class UserApiService
   end
 end
 
-# Erro de aplicação com status e body parseado (contrato do service)
 class AppError < StandardError
   attr_reader :status, :body
 
