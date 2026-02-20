@@ -8,6 +8,11 @@ class UserInputService
     persist_user(name: name, email: email)
   end
 
+  # Trecho B — adicionado no PR: não sanitiza name, não normaliza email (quebra o contrato)
+  def update_user(id, input)
+    persist_user(name: input[:name], email: input[:email])
+  end
+
   private
 
   def sanitize_html(str)
