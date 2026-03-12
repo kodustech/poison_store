@@ -10,7 +10,13 @@ class MedicationSalesController < ApplicationController
 
   def new
     @sale = MedicationSale.new
-    @medications = OverTheCounterMedication.active.in_stock
+    if params[:herbal_medicine_id].present?
+      @sale.herbal_medicine_id = params[:herbal_medicine_id]
+      @herbal_medicine = HerbalMedicine.find(params[:herbal_medicine_id])
+      @herbal_medicine&.tap { |h| @sale.unit_price = h.price }
+    else
+      @medications = OverTheCounterMedication.active.where(:stock_quantity.gt => 0)
+    end
   end
 
   def create
