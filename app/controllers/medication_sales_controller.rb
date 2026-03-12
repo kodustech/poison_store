@@ -2,7 +2,7 @@ class MedicationSalesController < ApplicationController
   before_action :set_sale, only: [:show, :edit, :update, :destroy]
 
   def index
-    @sales = MedicationSale.includes(:over_the_counter_medication).order(sale_date: :desc)
+    @sales = MedicationSale.includes(:over_the_counter_medication, :herbal_medicine).order(sale_date: :desc)
   end
 
   def show
@@ -31,13 +31,21 @@ class MedicationSalesController < ApplicationController
     if @sale.save
       redirect_to @sale, notice: 'Venda registrada com sucesso!'
     else
-      @medications = OverTheCounterMedication.active.in_stock
+      if @sale.herbal_medicine_id.present?
+        @herbal_medicine = HerbalMedicine.find(@sale.herbal_medicine_id)
+      else
+        @medications = OverTheCounterMedication.active.where(:stock_quantity.gt => 0)
+      end
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    @medications = OverTheCounterMedication.active.in_stock
+    if @sale.herbal_medicine_id.present?
+      @herbal_medicine = HerbalMedicine.find(@sale.herbal_medicine_id)
+    else
+      @medications = OverTheCounterMedication.active.where(:stock_quantity.gt => 0)
+    end
   end
 
   def update
@@ -50,7 +58,11 @@ class MedicationSalesController < ApplicationController
       
       redirect_to @sale, notice: 'Venda atualizada com sucesso!'
     else
-      @medications = OverTheCounterMedication.active.in_stock
+      if @sale.herbal_medicine_id.present?
+        @herbal_medicine = HerbalMedicine.find(@sale.herbal_medicine_id)
+      else
+        @medications = OverTheCounterMedication.active.where(:stock_quantity.gt => 0)
+      end
       render :edit, status: :unprocessable_entity
     end
   end
@@ -68,7 +80,7 @@ class MedicationSalesController < ApplicationController
 
   def sale_params
     params.require(:medication_sale).permit(
-      :over_the_counter_medication_id, :customer_name, :customer_cpf, :customer_phone,
+      :over_the_counter_medication_id, :herbal_medicine_id, :customer_name, :customer_cpf, :customer_phone,
       :customer_email, :quantity, :unit_price, :sold_with_prescription,
       :prescription_reference, :doctor_name, :doctor_crm, :sale_date,
       :payment_method, :notes
