@@ -16,3 +16,5 @@ class CreateOverTheCounterMedications
     end
   end
 end
+
+# Adicionar apenas essa linha aqui para validar como se comporta
