@@ -6,8 +6,10 @@ on:
       - '**.rpgle'
       - '**.sqlrpgle'
       - '**.rpg'
+      - '**.prg'
       - '**.RPGLE'
       - '**.SQLRPGLE'
+      - '**.PRG'
 
 jobs:
   check-encoding:
@@ -29,7 +31,7 @@ jobs:
               INVALID_FILES+=("$file")
               FAILED=1
             fi
-          done < <(find . -type f \( -iname "*.rpgle" -o -iname "*.sqlrpgle" -o -iname "*.rpg" \) -print0)
+          done < <(find . -type f \( -iname "*.rpgle" -o -iname "*.sqlrpgle" -o -iname "*.rpg" -o -iname "*.prg" \) -print0)
 
           if [[ $FAILED -eq 1 ]]; then
             echo ""
