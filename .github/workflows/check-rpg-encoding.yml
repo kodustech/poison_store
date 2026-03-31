@@ -1,0 +1,46 @@
+name: Check RPG file encoding
+
+on:
+  pull_request:
+    paths:
+      - '**.rpgle'
+      - '**.sqlrpgle'
+      - '**.rpg'
+      - '**.RPGLE'
+      - '**.SQLRPGLE'
+
+jobs:
+  check-encoding:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for UTF-8 encoded RPG files
+        run: |
+          FAILED=0
+          INVALID_FILES=()
+
+          while IFS= read -r -d '' file; do
+            # file -i retorna o charset detectado
+            ENCODING=$(file -i "$file" | grep -oP 'charset=\K[^ ]+')
+
+            if [[ "$ENCODING" == "utf-8" ]]; then
+              echo "❌ UTF-8 detectado: $file"
+              INVALID_FILES+=("$file")
+              FAILED=1
+            fi
+          done < <(find . -type f \( -iname "*.rpgle" -o -iname "*.sqlrpgle" -o -iname "*.rpg" \) -print0)
+
+          if [[ $FAILED -eq 1 ]]; then
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "ERRO: Os seguintes arquivos RPG estão em UTF-8."
+            echo "Salve-os em ASCII (EBCDIC/ISO-8859) antes de fazer o PR."
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            for f in "${INVALID_FILES[@]}"; do
+              echo "  → $f"
+            done
+            exit 1
+          fi
+
+          echo "✅ Todos os arquivos RPG estão em ASCII."
