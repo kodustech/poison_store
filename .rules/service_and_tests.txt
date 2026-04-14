@@ -1,0 +1,3 @@
+Toda classe do tipo service deve possuir um arquivo de teste vinculado
+
+Sempre que no PR existir uma classe do tipo service, ela deve ter vinculado a ela um arquivo de teste para garantir que os métodos estejam com cobertura de teste
