@@ -1,3 +1,1 @@
-Toda nova rota de controller, deve possuir documentação
-
 Sempre que uma rota de controller for criada, ela deve possuir uma explicação clara sobre o que faz, para que serve, e como deve ser usada. Ou seja, toda e qualquer rota de controller, sempre deve ter uma documentação.
