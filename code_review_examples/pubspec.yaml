@@ -18,12 +18,12 @@ dependencies:
   google_maps_flutter:
     git:
       url: https://github.com/quintoandar/flutter-packages.git
-      ref: google_maps_flutter-v2.6.0-fork.5
+      ref: google_maps_flutter-v2.6.0-fork.4
       path: packages/google_maps_flutter/google_maps_flutter
   google_maps_flutter_android:
     git:
       url: https://github.com/quintoandar/flutter-packages.git
-      ref: google_maps_flutter_android-v2.7.0-fork.4
+      ref: google_maps_flutter_android-v2.6.0-fork.4
       path: packages/google_maps_flutter/google_maps_flutter_android
   google_maps_flutter_platform_interface:
     git:
