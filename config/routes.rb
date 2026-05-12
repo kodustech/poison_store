@@ -24,4 +24,9 @@ Rails.application.routes.draw do
   get 'sobre', to: 'about#index'
 
   root 'medication_requests#new'
+
+  match '/404', to: 'errors#not_found', via: :all
+  match '/500', to: 'errors#internal_error', via: :all
+
+  match '*unmatched_route', to: 'errors#not_found', via: :all
 end 

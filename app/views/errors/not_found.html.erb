@@ -1,0 +1,23 @@
+<div class="container d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 300px);">
+  <div class="text-center">
+    <div class="mb-4">
+      <i class="bi bi-exclamation-triangle" style="font-size: 5rem; color: #dc3545;"></i>
+    </div>
+
+    <h1 class="display-1 fw-bold text-muted">404</h1>
+    <h2 class="h3 mb-3">Página não encontrada</h2>
+
+    <p class="lead text-muted mb-4">
+      Desculpe, a página que você está procurando não existe.
+    </p>
+
+    <p class="text-muted mb-5">
+      Verifique se o endereço está correto ou volte à página inicial.
+    </p>
+
+    <div class="d-flex gap-2 justify-content-center">
+      <%= link_to 'Voltar à Página Inicial', root_path, class: 'btn btn-primary btn-lg' %>
+      <%= link_to 'Voltar', :back, class: 'btn btn-outline-secondary btn-lg' %>
+    </div>
+  </div>
+</div>
