@@ -19,6 +19,7 @@ rule: >-
   like).
 severity: high
 scope: pull-request
+path: ''
 examples: []
 inheritance:
   inheritable: true

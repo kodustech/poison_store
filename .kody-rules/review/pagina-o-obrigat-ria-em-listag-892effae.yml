@@ -1,0 +1,28 @@
+title: Paginação obrigatória em listagens de controllers
+rule: >-
+  Todas as actions de listagem (index) em controllers Rails devem implementar
+  paginação. Não é permitido usar .all sem paginação em consultas que retornam
+  múltiplos registros, pois isso causa problemas de performance e consumo
+  excessivo de memória. Utilizar gems como 'kaminari' ou 'pagy' para implementar
+  a paginação, aceitando o parâmetro de página e retornando apenas um
+  subconjunto dos resultados.
+severity: high
+scope: file
+path: app/controllers/*_controller.rb
+examples:
+  - snippet: |-
+      # Incorreto - carrega todos os registros
+      @products = Product.all.order(:name)
+    isCorrect: false
+  - snippet: |-
+      # Correto - com paginação usando kaminari
+      @products = Product.order(:name).page(params[:page])
+    isCorrect: true
+  - snippet: |-
+      # Correto - com paginação usando pagy
+      @pagy, @products = pagy(Product.order(:name))
+    isCorrect: true
+inheritance:
+  inheritable: true
+  exclude: []
+  include: []

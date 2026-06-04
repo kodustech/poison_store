@@ -19,6 +19,7 @@ rule: >-
   like).
 severity: high
 scope: file
+path: ''
 examples: []
 inheritance:
   inheritable: true

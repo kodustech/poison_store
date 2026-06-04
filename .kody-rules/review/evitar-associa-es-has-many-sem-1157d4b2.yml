@@ -1,0 +1,52 @@
+title: Evitar associações has_many sem belongs_to correspondente em Mongoid
+rule: >-
+  Em modelos Mongoid, quando um modelo define `has_many :association_name`, o
+  modelo alvo DEVE ter o correspondente `belongs_to :model_name`. Associações
+  unidirecionais causam erro `Mongoid::Errors::UnknownAttribute` em tempo de
+  execução ao tentar criar registros associados. Sempre verifique se o modelo
+  alvo possui a associação inversa antes de definir has_many, ou crie um modelo
+  de associação específico quando necessário.
+severity: critical
+scope: file
+path: app/models/*.rb
+examples:
+  - snippet: |-
+      # INCORRETO - causa erro em runtime
+      class Supplement
+        include Mongoid::Document
+        has_many :medication_sales  # MedicationSale não tem belongs_to :supplement
+      end
+
+      class MedicationSale
+        include Mongoid::Document
+        belongs_to :over_the_counter_medication
+      end
+    isCorrect: false
+  - snippet: |-
+      # CORRETO - associação bidirecional
+      class Supplement
+        include Mongoid::Document
+        has_many :supplement_sales
+      end
+
+      class SupplementSale
+        include Mongoid::Document
+        belongs_to :supplement  # Associação correspondente existe
+      end
+    isCorrect: true
+  - snippet: |-
+      # CORRETO - usando associação polimórfica
+      class Supplement
+        include Mongoid::Document
+        has_many :sales, as: :sellable
+      end
+
+      class MedicationSale
+        include Mongoid::Document
+        belongs_to :sellable, polymorphic: true  # Funciona com múltiplos tipos
+      end
+    isCorrect: true
+inheritance:
+  inheritable: true
+  exclude: []
+  include: []
