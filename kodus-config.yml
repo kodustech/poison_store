@@ -7,7 +7,7 @@ reviewOptions:
   business_logic: false
 suggestionControl:
   maxSuggestions: 20
-  severityLevelFilter: medium
+  severityLevelFilter: low
 v2PromptOverrides:
   level:
     issue: >
