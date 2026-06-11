@@ -90,6 +90,8 @@ v2PromptOverrides:
 automatedReviewActive: false
 pullRequestApprovalActive: true
 enableCommittableSuggestions: false
+summary:
+  generatePRSummary: false
 customMessages:
   startReviewMessage:
     content: >
