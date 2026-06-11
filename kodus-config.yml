@@ -1,3 +1,5 @@
+summary:
+  generatePRSummary: false
 reviewOptions:
   security: false
   cross_file: true
