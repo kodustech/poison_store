@@ -1,0 +1,22 @@
+title: Validate references
+rule: >-
+  If the PR references a ticket (e.g., 'Refs: ABC-123' or a
+  Linear/Jira/Asana/ClickUp/Trello link), verify the diff covers each Acceptance
+  Criterion.
+
+  - If a ticketing MCP is available: fetch the ticket and list AC → code/tests
+  mapping.
+
+  - If no MCP is available or the ticket is inaccessible: ask the author to
+  paste the Acceptance Criteria in the PR description.
+
+  Flag any missing criteria, unhandled edge cases, or partial implementations
+  before human review.
+severity: high
+scope: file
+path: app/models/**
+examples: []
+inheritance:
+  inheritable: true
+  exclude: []
+  include: []

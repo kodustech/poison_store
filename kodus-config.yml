@@ -1,16 +1,83 @@
+summary:
+  customInstructions: ''
+  behaviourForNewCommits: none
+  behaviourForExistingDescription: replace
+byokModel: ''
+runOnDraft: true
+ignorePaths:
+  - yarn.lock
+  - package-lock.json
+  - package.json
+  - .env
+  - '**/*.json'
+baseBranches: []
+reviewCadence:
+  type: automatic
+  timeWindow: 15
+  pushesToTrigger: 3
 reviewOptions:
+  bug: true
   security: false
   cross_file: true
   performance: false
   business_logic: false
+codeReviewVersion: v2
 suggestionControl:
   maxSuggestions: 20
   severityLevelFilter: low
+  applyFiltersToKodyRules: false
 v2PromptOverrides:
   level:
     issue: >
       The code produces WRONG results, crashes, loses data, or silently fails to
       perform its intended function in at least one scenario.
+    warning: >
+      The code produces CORRECT results and performs its intended function in
+      ALL scenarios but is suboptimal in style, performance, or maintainability.
+    critical: >
+      The code WILL crash, lose/corrupt data, or open a severe security breach
+      in production. Immediate fix required before merge.
+  severity:
+    flags:
+      low: |
+        Minor performance overhead
+        Low-risk security improvements
+        Incorrect metrics/logs
+        Rarely affecting few users
+        Edge-case issues unlikely to occur in practice
+      high: >
+        Important functionality broken or silently wrong
+
+        Race conditions, TOCTOU bugs, missing synchronization
+
+        Missing or incorrect locking (e.g., double-checked locking, lock scope
+        reduction)
+
+        Cache inconsistency or stale data served to users
+
+        Feature flags or configuration that silently disables functionality
+
+        Memory leaks that cause eventual crash
+
+        Performance degradation affecting UX under normal load
+
+        Security issues with indirect exploitation paths
+
+        Functions that always return wrong values (logic errors)
+      medium: |
+        Partially broken functionality with workarounds available
+        Performance issues in specific scenarios only
+        Security weaknesses requiring specific conditions to exploit
+        Incorrect but recoverable data
+        Non-critical business logic errors
+      critical: |
+        Application crash/downtime
+        Data loss/corruption or state corruption under concurrent access
+        Security breach (unauthorized access/data exfiltration)
+        Critical operation failure (auth/payment/authorization)
+        Direct financial loss operations
+        Memory leaks that inevitably crash production
+        Race conditions causing data loss or security bypass
   categories:
     descriptions:
       bug: >-
@@ -87,9 +154,16 @@ v2PromptOverrides:
       identified in...\"\n- **Use Active Voice**: \"The function leaks memory\"
       instead of \"Memory is leaked by the function.\"\n- **Sentence cap**:
       Limit the description to 1-2 high-impact sentences.\n"}]}]}
+showStatusFeedback: true
+ideRulesSyncEnabled: false
+ignoredTitleKeywords: []
 automatedReviewActive: false
+isRequestChangesActive: false
+kodyRulesGeneratorEnabled: true
 pullRequestApprovalActive: true
 enableCommittableSuggestions: false
+llmGeneratedMemoriesRequireApproval: false
+kodusConfigFileOverridesWebPreferences: false
 customMessages:
   startReviewMessage:
     content: >
