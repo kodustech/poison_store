@@ -1,0 +1,6 @@
+# No eval on user input
+
+Never pass user-controlled input to `eval()`, `exec()` or `pickle.loads()`.
+Use safe parsers (e.g. `json.loads`, `ast.literal_eval`) instead.
+
+@kody-sync
