@@ -1,0 +1,121 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-droplet-half"></i> Produtos de Perfumaria</h1>
+        <%= link_to 'Novo Produto', new_perfumery_product_path, class: 'btn btn-primary' %>
+      </div>
+
+      <!-- Filtros e Busca -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <%= form_with url: perfumery_products_path, method: :get, local: true, class: 'row g-3' do |form| %>
+            <div class="col-md-4">
+              <%= form.label :search, 'Buscar por nome, marca ou categoria', class: 'form-label' %>
+              <%= form.text_field :search, value: params[:search], class: 'form-control', placeholder: 'Digite para buscar...' %>
+            </div>
+
+            <div class="col-md-3">
+              <%= form.label :category, 'Categoria', class: 'form-label' %>
+              <%= form.select :category, options_for_select([['Todas', '']] + PerfumeryProduct::CATEGORIES.map { |c| [c, c] }, params[:category]), {}, class: 'form-select' %>
+            </div>
+
+            <div class="col-md-3">
+              <%= form.label :active, 'Status', class: 'form-label' %>
+              <%= form.select :active, options_for_select([['Todos', ''], ['Ativos', 'true'], ['Inativos', 'false']], params[:active]), {}, class: 'form-select' %>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+              <%= form.submit 'Filtrar', class: 'btn btn-outline-primary me-2' %>
+              <%= link_to 'Limpar', perfumery_products_path, class: 'btn btn-outline-secondary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Lista de Produtos -->
+      <div class="card">
+        <div class="card-body">
+          <% if @perfumery_products.any? %>
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Marca</th>
+                    <th>Categoria</th>
+                    <th>Volume</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @perfumery_products.each do |product| %>
+                    <tr>
+                      <td><strong><%= product.name %></strong></td>
+                      <td><%= product.brand %></td>
+                      <td><%= product.category %></td>
+                      <td>
+                        <% if product.volume_ml.present? %>
+                          <%= product.volume_ml %> ml
+                        <% else %>
+                          <span class="text-muted">-</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if product.has_discount? %>
+                          <span class="text-decoration-line-through text-muted small">R$ <%= number_with_precision(product.price, precision: 2) %></span>
+                          <strong class="text-success ms-1">R$ <%= number_with_precision(product.price_with_discount, precision: 2) %></strong>
+                          <span class="badge bg-info ms-1"><%= number_to_percentage(product.discount_percentage, precision: 0) %> off</span>
+                        <% else %>
+                          R$ <%= number_with_precision(product.price, precision: 2) %>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if product.low_stock? %>
+                          <span class="badge bg-warning"><%= product.stock_quantity %></span>
+                        <% else %>
+                          <span class="badge bg-success"><%= product.stock_quantity %></span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <% if product.active? %>
+                          <span class="badge bg-success">Ativo</span>
+                        <% else %>
+                          <span class="badge bg-danger">Inativo</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <%= link_to 'Ver', perfumery_product_path(product), class: 'btn btn-sm btn-outline-primary' %>
+                          <%= link_to 'Editar', edit_perfumery_product_path(product), class: 'btn btn-sm btn-outline-warning' %>
+                          <%= link_to 'Remover', perfumery_product_path(product),
+                              method: :delete,
+                              data: { confirm: 'Tem certeza que deseja remover este produto?' },
+                              class: 'btn btn-sm btn-outline-danger' %>
+                        </div>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3">
+              <small class="text-muted">
+                Total de produtos: <strong><%= @perfumery_products.count %></strong>
+              </small>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <p class="text-muted">Nenhum produto de perfumaria encontrado.</p>
+              <%= link_to 'Cadastrar primeiro produto', new_perfumery_product_path, class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

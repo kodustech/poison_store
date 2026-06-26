@@ -11,7 +11,8 @@ Rails.application.routes.draw do
   end
   
   resources :laboratories
-  
+  resources :perfumery_products
+
   resources :reports, only: [:index] do
     collection do
       get :top_medications
