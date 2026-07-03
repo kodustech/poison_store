@@ -1,0 +1,7 @@
+# Strong parameters obrigatórios em controllers
+
+Toda criação (`Model.new`, `Model.create`) e atualização (`update`) em controllers deve usar strong parameters via `params.require(:resource).permit(...)` com a lista explícita de atributos permitidos.
+
+Nunca passe `params[:resource]` diretamente para o model, nem use `permit!` sem filtro — isso abre brecha de mass assignment (ex: sobrescrever `admin`, `role`, `active`, `price`). Encapsule a whitelist em um método privado `*_params`.
+
+@kody-sync
