@@ -1,0 +1,7 @@
+# Evitar N+1 queries com eager loading
+
+Sempre que uma action de listagem (`index`) ou uma view iterar sobre uma coleção acessando associações, carregue as associações antecipadamente com `includes(:association)`.
+
+Nunca itere sobre `Model.all` acessando `record.association` dentro do loop sem `includes` — isso gera N+1 queries e degrada a performance à medida que a base cresce. Sempre inclua as associações usadas na listagem.
+
+@kody-sync
