@@ -1,0 +1,34 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Lotes a vencer (<%= @days %> dias)</h1>
+    <div>
+      <%= link_to 'Exportar CSV', expiring_medication_batches_path(days: @days, format: :csv), class: 'btn btn-outline-secondary' %>
+      <%= button_to 'Quarentenar vencidos', quarantine_expired_medication_batches_path, method: :post, class: 'btn btn-warning' %>
+    </div>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Medicamento</th>
+        <th>Lote</th>
+        <th>Quantidade</th>
+        <th>Validade</th>
+        <th>Dias restantes</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @report.each do |item| %>
+        <tr>
+          <td><%= item[:medication] %></td>
+          <td><%= item[:batch_number] %></td>
+          <td><%= item[:quantity] %></td>
+          <td><%= item[:expiration_date] %></td>
+          <td><%= item[:days_left] %></td>
+          <td><%= item[:status] %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

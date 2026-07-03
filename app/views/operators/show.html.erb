@@ -1,0 +1,27 @@
+<div class="container mt-4">
+  <h1>Operador: <%= @operator.name %></h1>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Email</dt>
+        <dd class="col-sm-9"><%= @operator.email %></dd>
+
+        <dt class="col-sm-3">Papel</dt>
+        <dd class="col-sm-9"><%= @operator.role %></dd>
+
+        <dt class="col-sm-3">Ativo</dt>
+        <dd class="col-sm-9"><%= @operator.active ? 'Sim' : 'Não' %></dd>
+
+        <dt class="col-sm-3">Tentativas falhas</dt>
+        <dd class="col-sm-9"><%= @operator.failed_attempts %></dd>
+
+        <dt class="col-sm-3">Token de API</dt>
+        <dd class="col-sm-9"><code><%= @operator.api_token %></code></dd>
+      </dl>
+    </div>
+  </div>
+
+  <%= link_to 'Editar', edit_operator_path(@operator), class: 'btn btn-primary' %>
+  <%= link_to 'Voltar', operators_path, class: 'btn btn-outline-secondary' %>
+</div>

@@ -1,0 +1,29 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Lotes — <%= @medication.name %></h1>
+    <%= link_to 'Novo Lote', new_medication_medication_batch_path(@medication), class: 'btn btn-primary' %>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Lote</th>
+        <th>Quantidade</th>
+        <th>Fabricação</th>
+        <th>Validade</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @batches.each do |batch| %>
+        <tr class="<%= 'table-danger' if batch.expired? %>">
+          <td><%= batch.batch_number %></td>
+          <td><%= batch.quantity %></td>
+          <td><%= batch.manufacturing_date %></td>
+          <td><%= batch.expiration_date %></td>
+          <td><%= batch.status_label %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,29 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Operadores</h1>
+    <%= link_to 'Novo Operador', new_operator_path, class: 'btn btn-primary' %>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Papel</th>
+        <th>Ativo</th>
+        <th>Token</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @operators.each do |operator| %>
+        <tr>
+          <td><%= operator.name %></td>
+          <td><%= operator.email %></td>
+          <td><%= operator.role %></td>
+          <td><%= operator.active ? 'Sim' : 'Não' %></td>
+          <td><code><%= operator.api_token %></code></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

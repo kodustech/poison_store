@@ -1,0 +1,32 @@
+<div class="container mt-4">
+  <h1>Conta de Fidelidade</h1>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">CPF</dt>
+        <dd class="col-sm-9"><%= @account.customer_cpf %></dd>
+
+        <dt class="col-sm-3">Pontos</dt>
+        <dd class="col-sm-9"><%= @account.points %></dd>
+
+        <dt class="col-sm-3">Tier</dt>
+        <dd class="col-sm-9"><%= @account.tier %></dd>
+
+        <dt class="col-sm-3">Desconto</dt>
+        <dd class="col-sm-9"><%= number_to_percentage(@account.discount_rate * 100, precision: 0) %></dd>
+      </dl>
+    </div>
+  </div>
+
+  <%= form_with url: redeem_loyalty_account_path(@account), method: :patch, local: true do |form| %>
+    <div class="input-group w-auto">
+      <%= form.number_field :amount, placeholder: 'Pontos a resgatar', class: 'form-control' %>
+      <%= form.submit 'Resgatar', class: 'btn btn-success' %>
+    </div>
+  <% end %>
+
+  <div class="mt-3">
+    <%= link_to 'Voltar', loyalty_accounts_path, class: 'btn btn-outline-secondary' %>
+  </div>
+</div>

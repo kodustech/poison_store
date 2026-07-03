@@ -1,0 +1,28 @@
+<div class="container mt-4">
+  <h1>Nova Conta de Fidelidade</h1>
+
+  <%= form_with model: @account, url: loyalty_accounts_path, local: true do |form| %>
+    <% if @account.errors.any? %>
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          <% @account.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="mb-3">
+      <%= form.label :customer_cpf, 'CPF do cliente', class: 'form-label' %>
+      <%= form.text_field :customer_cpf, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :points, 'Pontos iniciais', class: 'form-label' %>
+      <%= form.number_field :points, class: 'form-control' %>
+    </div>
+
+    <%= form.submit 'Criar', class: 'btn btn-primary' %>
+    <%= link_to 'Voltar', loyalty_accounts_path, class: 'btn btn-outline-secondary' %>
+  <% end %>
+</div>

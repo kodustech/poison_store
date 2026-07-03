@@ -1,0 +1,32 @@
+<div class="container mt-4">
+  <h1>Novo Lote — <%= @medication.name %></h1>
+
+  <%= form_with url: medication_medication_batches_path(@medication), method: :post, local: true, scope: :medication_batch do |form| %>
+    <div class="mb-3">
+      <%= form.label :batch_number, 'Número do lote', class: 'form-label' %>
+      <%= form.text_field :batch_number, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :quantity, 'Quantidade', class: 'form-label' %>
+      <%= form.number_field :quantity, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :manufacturing_date, 'Data de fabricação', class: 'form-label' %>
+      <%= form.date_field :manufacturing_date, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :expiration_date, 'Data de validade', class: 'form-label' %>
+      <%= form.date_field :expiration_date, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :supplier_name, 'Fornecedor', class: 'form-label' %>
+      <%= form.text_field :supplier_name, class: 'form-control' %>
+    </div>
+
+    <%= form.submit 'Cadastrar', class: 'btn btn-primary' %>
+  <% end %>
+</div>

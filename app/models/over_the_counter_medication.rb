@@ -15,6 +15,9 @@ class OverTheCounterMedication
   field :minimum_stock, type: Integer, default: 10
 
   has_many :medication_sales
+  has_many :stock_movements
+  has_many :restock_orders
+  has_many :medication_batches
 
   validates :name, presence: true, uniqueness: true
   validates :price, presence: true, numericality: { greater_than: 0 }

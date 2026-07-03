@@ -1,0 +1,31 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Programa de Fidelidade</h1>
+    <%= link_to 'Nova Conta', new_loyalty_account_path, class: 'btn btn-primary' %>
+  </div>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>CPF</th>
+        <th>Pontos</th>
+        <th>Tier</th>
+        <th>Desconto</th>
+        <th>Última atividade</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @accounts.each do |account| %>
+        <tr>
+          <td><%= account.customer_cpf %></td>
+          <td><%= account.points %></td>
+          <td><%= account.tier %></td>
+          <td><%= number_to_percentage(account.discount_rate * 100, precision: 0) %></td>
+          <td><%= account.last_activity_at&.strftime('%d/%m/%Y') %></td>
+          <td><%= link_to 'Ver', account, class: 'btn btn-sm btn-outline-primary' %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
