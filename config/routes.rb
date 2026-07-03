@@ -1,8 +1,20 @@
 Rails.application.routes.draw do
   resources :medication_requests, only: [:new, :create]
   
-  resources :over_the_counter_medications
+  resources :over_the_counter_medications do
+    resources :stock_movements, only: [:index, :new, :create]
+  end
   resources :medication_sales
+
+  get 'stock_dashboard', to: 'stock_movements#dashboard'
+
+  resources :restock_orders do
+    member do
+      patch :submit
+      patch :receive
+      patch :cancel
+    end
+  end
   
   resources :medical_professionals do
     collection do

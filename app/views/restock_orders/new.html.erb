@@ -1,0 +1,48 @@
+<div class="container mt-4">
+  <h1>Nova Ordem de Reposição</h1>
+
+  <%= form_with model: @order, url: restock_orders_path, local: true do |form| %>
+    <% if @order.errors.any? %>
+      <div class="alert alert-danger">
+        <ul class="mb-0">
+          <% @order.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="mb-3">
+      <%= form.label :over_the_counter_medication_id, 'Medicamento', class: 'form-label' %>
+      <%= form.collection_select :over_the_counter_medication_id, @medications, :id, :name, {}, class: 'form-select' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :supplier_name, 'Fornecedor', class: 'form-label' %>
+      <%= form.text_field :supplier_name, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :requested_quantity, 'Quantidade', class: 'form-label' %>
+      <%= form.number_field :requested_quantity, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :unit_cost, 'Custo unitário', class: 'form-label' %>
+      <%= form.number_field :unit_cost, step: '0.01', class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :expected_delivery, 'Previsão de entrega', class: 'form-label' %>
+      <%= form.date_field :expected_delivery, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :notes, 'Observações', class: 'form-label' %>
+      <%= form.text_area :notes, class: 'form-control', rows: 3 %>
+    </div>
+
+    <%= form.submit 'Criar ordem', class: 'btn btn-primary' %>
+    <%= link_to 'Voltar', restock_orders_path, class: 'btn btn-outline-secondary' %>
+  <% end %>
+</div>

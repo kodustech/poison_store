@@ -1,0 +1,35 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Ordens de Reposição</h1>
+    <%= link_to 'Nova Ordem', new_restock_order_path, class: 'btn btn-primary' %>
+  </div>
+
+  <p class="text-muted">Pendentes: <%= @pending_count %></p>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Fornecedor</th>
+        <th>Medicamento</th>
+        <th>Qtd solicitada</th>
+        <th>Qtd recebida</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |order| %>
+        <tr>
+          <td><%= order.supplier_name %></td>
+          <td><%= order.over_the_counter_medication&.name %></td>
+          <td><%= order.requested_quantity %></td>
+          <td><%= order.received_quantity %></td>
+          <td><%= order.status %></td>
+          <td><%= number_to_currency(order.total_amount, unit: 'R$ ') %></td>
+          <td><%= link_to 'Ver', order, class: 'btn btn-sm btn-outline-primary' %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

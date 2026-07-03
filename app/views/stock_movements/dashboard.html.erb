@@ -1,0 +1,54 @@
+<div class="container mt-4">
+  <h1>Dashboard de Estoque</h1>
+
+  <div class="row my-4">
+    <div class="col-md-4">
+      <div class="card text-bg-primary">
+        <div class="card-body">
+          <h5>Medicamentos ativos</h5>
+          <p class="display-6"><%= @total_medications %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-danger">
+        <div class="card-body">
+          <h5>Sem estoque</h5>
+          <p class="display-6"><%= @out_of_stock %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-bg-warning">
+        <div class="card-body">
+          <h5>Precisam reposição</h5>
+          <p class="display-6"><%= @low_stock.size %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Itens com estoque baixo</h3>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Medicamento</th>
+        <th>Estoque atual</th>
+        <th>Estoque mínimo</th>
+        <th>Sugestão de compra</th>
+        <th>Custo estimado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @low_stock.each do |item| %>
+        <tr>
+          <td><%= item[:medication] %></td>
+          <td><%= item[:current_stock] %></td>
+          <td><%= item[:minimum_stock] %></td>
+          <td><%= item[:suggested_quantity] %></td>
+          <td><%= number_to_currency(item[:estimated_cost], unit: 'R$ ') %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

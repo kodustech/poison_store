@@ -1,0 +1,43 @@
+<div class="container mt-4">
+  <h1>Ordem de Reposição</h1>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Fornecedor</dt>
+        <dd class="col-sm-9"><%= @order.supplier_name %></dd>
+
+        <dt class="col-sm-3">Medicamento</dt>
+        <dd class="col-sm-9"><%= @order.over_the_counter_medication&.name %></dd>
+
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9"><%= @order.status %></dd>
+
+        <dt class="col-sm-3">Solicitado</dt>
+        <dd class="col-sm-9"><%= @order.requested_quantity %></dd>
+
+        <dt class="col-sm-3">Recebido</dt>
+        <dd class="col-sm-9"><%= @order.received_quantity %> (faltam <%= @order.outstanding_quantity %>)</dd>
+
+        <dt class="col-sm-3">Total</dt>
+        <dd class="col-sm-9"><%= number_to_currency(@order.total_amount, unit: 'R$ ') %></dd>
+      </dl>
+    </div>
+  </div>
+
+  <% unless @order.status == 'received' || @order.status == 'cancelled' %>
+    <%= button_to 'Enviar ao fornecedor', submit_restock_order_path(@order), method: :patch, class: 'btn btn-primary' %>
+
+    <%= form_with url: receive_restock_order_path(@order), method: :patch, local: true, class: 'd-inline' do |form| %>
+      <%= form.number_field :received_quantity, placeholder: 'Qtd recebida', class: 'form-control d-inline-block w-auto' %>
+      <%= form.text_field :operator_name, placeholder: 'Operador', class: 'form-control d-inline-block w-auto' %>
+      <%= form.submit 'Registrar recebimento', class: 'btn btn-success' %>
+    <% end %>
+
+    <%= button_to 'Cancelar', cancel_restock_order_path(@order), method: :patch, class: 'btn btn-outline-danger' %>
+  <% end %>
+
+  <div class="mt-3">
+    <%= link_to 'Voltar', restock_orders_path, class: 'btn btn-outline-secondary' %>
+  </div>
+</div>

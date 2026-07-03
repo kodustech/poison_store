@@ -1,0 +1,38 @@
+<div class="container mt-4">
+  <h1>Nova Movimentação — <%= @medication.name %></h1>
+
+  <%= form_with url: medication_stock_movements_path(@medication), method: :post, local: true, scope: :stock_movement do |form| %>
+    <div class="mb-3">
+      <%= form.label :movement_type, 'Tipo', class: 'form-label' %>
+      <%= form.select :movement_type, StockMovement::MOVEMENT_TYPES.map { |t| [t, t] }, {}, class: 'form-select' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :quantity, 'Quantidade', class: 'form-label' %>
+      <%= form.number_field :quantity, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :operator_name, 'Operador', class: 'form-label' %>
+      <%= form.text_field :operator_name, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :reason, 'Motivo', class: 'form-label' %>
+      <%= form.text_field :reason, class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :unit_cost, 'Custo unitário', class: 'form-label' %>
+      <%= form.number_field :unit_cost, step: '0.01', class: 'form-control' %>
+    </div>
+
+    <div class="mb-3">
+      <%= form.label :reference, 'Referência', class: 'form-label' %>
+      <%= form.text_field :reference, class: 'form-control' %>
+    </div>
+
+    <%= form.submit 'Registrar', class: 'btn btn-primary' %>
+    <%= link_to 'Voltar', medication_stock_movements_path(@medication), class: 'btn btn-outline-secondary' %>
+  <% end %>
+</div>

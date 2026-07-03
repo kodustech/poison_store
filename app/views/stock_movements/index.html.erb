@@ -1,0 +1,48 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Movimentações de Estoque — <%= @medication.name %></h1>
+    <%= link_to 'Nova Movimentação', new_medication_stock_movement_path(@medication), class: 'btn btn-primary' %>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Saldo atual</h5>
+      <p class="display-6"><%= @medication.stock_quantity %> unidades</p>
+      <% if @medication.low_stock? %>
+        <span class="badge bg-warning text-dark">Estoque baixo</span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @restock_suggestion %>
+    <div class="alert alert-warning">
+      Sugestão de reposição: comprar <strong><%= @restock_suggestion[:suggested_quantity] %></strong>
+      unidades (custo estimado <%= number_to_currency(@restock_suggestion[:estimated_cost], unit: 'R$ ') %>).
+    </div>
+  <% end %>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Tipo</th>
+        <th>Quantidade</th>
+        <th>Operador</th>
+        <th>Motivo</th>
+        <th>Custo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @movements.each do |movement| %>
+        <tr>
+          <td><%= movement.movement_date&.strftime('%d/%m/%Y %H:%M') %></td>
+          <td><%= movement.movement_type %></td>
+          <td><%= movement.signed_quantity %></td>
+          <td><%= movement.operator_name %></td>
+          <td><%= movement.reason %></td>
+          <td><%= number_to_currency(movement.total_cost, unit: 'R$ ') %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
