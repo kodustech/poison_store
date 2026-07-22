@@ -1,0 +1,21 @@
+## Título:
+  Previna N+1 queries pré-carregando associações no ActiveRecord
+
+## Descrição:
+  Sempre que iterar sobre uma coleção do ActiveRecord e acessar uma associação dentro
+  do loop, a associação deve ser pré-carregada com `includes` (ou
+  `preload`/`eager_load`). Caso contrário cada iteração dispara uma query extra
+  (N+1).
+
+  Sinalize qualquer `.each`/`.map`/`.select` sobre resultado de query onde o bloco
+  acessa um método de associação sem que a query de origem tenha `includes`.
+  
+## Ruim:
+    Order.where(status: :paid).each do |order|
+      puts order.customer.email   # 1 query por order
+    end
+
+## Bom:
+    Order.where(status: :paid).includes(:customer).each do |order|
+      puts order.customer.email   # associação já carregada
+    end
