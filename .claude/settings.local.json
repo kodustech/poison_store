@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config:*)",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(file:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}
