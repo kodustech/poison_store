@@ -1,0 +1,143 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2><%= @herbal_medicine.commercial_name %></h2>
+            <div>
+              <%= link_to 'Editar', edit_herbal_medicine_path(@herbal_medicine), class: 'btn btn-warning' %>
+              <%= link_to 'Voltar', herbal_medicines_path, class: 'btn btn-secondary' %>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h5>Informações Botânicas</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Nome Científico:</strong></td>
+                  <td><em><%= @herbal_medicine.scientific_name %></em></td>
+                </tr>
+                <tr>
+                  <td><strong>Parte da Planta:</strong></td>
+                  <td><%= @herbal_medicine.plant_part %></td>
+                </tr>
+                <tr>
+                  <td><strong>Forma Farmacêutica:</strong></td>
+                  <td><%= @herbal_medicine.dosage_form %></td>
+                </tr>
+                <tr>
+                  <td><strong>Fabricante:</strong></td>
+                  <td><%= @herbal_medicine.manufacturer %></td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h5>Informações Comerciais</h5>
+              <table class="table table-borderless">
+                <tr>
+                  <td><strong>Preço:</strong></td>
+                  <td><span class="h5 text-primary">R$ <%= number_with_precision(@herbal_medicine.price, precision: 2) %></span></td>
+                </tr>
+                <tr>
+                  <td><strong>Estoque:</strong></td>
+                  <td>
+                    <span class="badge <%= @herbal_medicine.in_stock? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @herbal_medicine.stock_quantity %> unidades
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Estoque Mínimo:</strong></td>
+                  <td><%= @herbal_medicine.minimum_stock %> unidades</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+
+          <% if @herbal_medicine.description.present? %>
+            <div class="mt-4">
+              <h5>Descrição</h5>
+              <p class="text-muted"><%= @herbal_medicine.description %></p>
+            </div>
+          <% end %>
+
+          <% if @herbal_medicine.therapeutic_indications.present? %>
+            <div class="mt-4">
+              <h5>Indicações Terapêuticas</h5>
+              <p class="text-muted"><%= @herbal_medicine.therapeutic_indications %></p>
+            </div>
+          <% end %>
+
+          <% if @herbal_medicine.contraindications.present? %>
+            <div class="mt-4">
+              <h5>Contraindicações</h5>
+              <p class="text-danger"><%= @herbal_medicine.contraindications %></p>
+            </div>
+          <% end %>
+
+          <% if @herbal_medicine.drug_interactions.present? %>
+            <div class="mt-4">
+              <h5>Interações Medicamentosas</h5>
+              <p class="text-warning"><%= @herbal_medicine.drug_interactions %></p>
+            </div>
+          <% end %>
+
+          <div class="mt-4">
+            <h5>Status do Produto</h5>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Disponibilidade</h6>
+                    <span class="badge <%= @herbal_medicine.available_for_sale? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @herbal_medicine.available_for_sale? ? 'Disponível' : 'Indisponível' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Estoque</h6>
+                    <span class="badge <%= @herbal_medicine.in_stock? ? 'bg-success' : 'bg-danger' %> fs-6">
+                      <%= @herbal_medicine.in_stock? ? 'Em Estoque' : 'Sem Estoque' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card bg-light">
+                  <div class="card-body text-center">
+                    <h6>Alerta de Estoque</h6>
+                    <span class="badge <%= @herbal_medicine.low_stock? ? 'bg-warning' : 'bg-success' %> fs-6">
+                      <%= @herbal_medicine.low_stock? ? 'Estoque Baixo' : 'Estoque OK' %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ações Rápidas</h5>
+        </div>
+        <div class="card-body">
+          <%= link_to 'Nova Venda', new_medication_sale_path(herbal_medicine_id: @herbal_medicine.id), 
+              class: 'btn btn-primary btn-lg w-100 mb-2' %>
+          <%= link_to 'Ver Vendas', medication_sales_path(herbal_medicine_id: @herbal_medicine.id), 
+              class: 'btn btn-outline-info w-100 mb-2' %>
+          <%= link_to 'Relatório Mensal', monthly_sales_report_path(year: Date.current.year, month: Date.current.month), 
+              class: 'btn btn-outline-success w-100' %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

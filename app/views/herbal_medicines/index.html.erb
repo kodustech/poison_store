@@ -1,0 +1,59 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Remédios Fitoterápicos</h1>
+    <%= link_to 'Novo Fitoterápico', new_herbal_medicine_path, class: 'btn btn-primary' %>
+  </div>
+
+  <% if @herbal_medicines.any? %>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Nome Comercial</th>
+            <th>Nome Científico</th>
+            <th>Parte da Planta</th>
+            <th>Forma Farmacêutica</th>
+            <th>Preço</th>
+            <th>Estoque</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @herbal_medicines.each do |herbal_medicine| %>
+            <tr>
+              <td><strong><%= herbal_medicine.commercial_name %></strong></td>
+              <td><em><%= herbal_medicine.scientific_name %></em></td>
+              <td><%= herbal_medicine.plant_part %></td>
+              <td><%= herbal_medicine.dosage_form %></td>
+              <td>R$ <%= number_with_precision(herbal_medicine.price, precision: 2) %></td>
+              <td>
+                <span class="badge <%= herbal_medicine.in_stock? ? 'bg-success' : 'bg-danger' %>">
+                  <%= herbal_medicine.stock_quantity %> unidades
+                </span>
+                <% if herbal_medicine.low_stock? %>
+                  <span class="badge bg-warning">Estoque baixo</span>
+                <% end %>
+              </td>
+              <td>
+                <span class="badge <%= herbal_medicine.available_for_sale? ? 'bg-success' : 'bg-secondary' %>">
+                  <%= herbal_medicine.available_for_sale? ? 'Disponível' : 'Indisponível' %>
+                </span>
+              </td>
+              <td>
+                <%= link_to 'Ver', herbal_medicine_path(herbal_medicine), class: 'btn btn-sm btn-info' %>
+                <%= link_to 'Editar', edit_herbal_medicine_path(herbal_medicine), class: 'btn btn-sm btn-warning' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h4>Nenhum remédio fitoterápico cadastrado</h4>
+      <p>Comece cadastrando seu primeiro remédio fitoterápico.</p>
+      <%= link_to 'Cadastrar Primeiro Fitoterápico', new_herbal_medicine_path, class: 'btn btn-primary' %>
+    </div>
+  <% end %>
+</div>

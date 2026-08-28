@@ -25,3 +25,5 @@ class CreateMedicationRequests < ActiveRecord::Migration[7.0]
     add_index :medication_requests, :cpf, unique: true
   end
 end 
+
+# Vou adicionar esse trecho aqui no migration apenas para validar como está sendo feito o get do fileContent

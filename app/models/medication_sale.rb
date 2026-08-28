@@ -20,8 +20,10 @@ class MedicationSale
   field :discount_percentage, type: Float, default: 0.0
   field :original_price, type: Float
   field :final_price, type: Float
+  field :herbal_medicine_id, type: BSON::ObjectId
 
-  belongs_to :over_the_counter_medication
+  belongs_to :over_the_counter_medication, optional: true
+  belongs_to :herbal_medicine, optional: true
 
   validates :customer_name, presence: true
   validates :customer_cpf, presence: true
@@ -30,6 +32,7 @@ class MedicationSale
   validates :total_price, presence: true, numericality: { greater_than: 0 }
   validates :sale_date, presence: true
   validates :payment_method, presence: true
+  validate :must_have_medication_or_herbal
 
   before_validation :calculate_total_price
   after_create :update_stock
@@ -66,7 +69,17 @@ class MedicationSale
   end
 
   def update_stock
-    medication = over_the_counter_medication
-    medication.update(stock_quantity: medication.stock_quantity - quantity)
+    if herbal_medicine_id.present?
+      herbal = herbal_medicine
+      herbal.update(stock_quantity: herbal.stock_quantity - quantity) if herbal
+    elsif over_the_counter_medication_id.present?
+      medication = over_the_counter_medication
+      medication.update(stock_quantity: medication.stock_quantity - quantity) if medication
+    end
+  end
+
+  def must_have_medication_or_herbal
+    return if herbal_medicine_id.present? ^ over_the_counter_medication_id.present?
+    errors.add(:base, "Informe um medicamento ou um fitoterápico")
   end
 end
