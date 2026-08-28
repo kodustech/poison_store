@@ -8,3 +8,9 @@ async function getUser(id: string) {
   if (!res.ok) throw new AppError(res.status, await parseErrorBody(res));
   return res.json();
 }
+
+async function deleteUser(id: string) {
+  const res = await fetch(`/users/${id}`);
+  if (!res.ok) throw new Error(`Failed: ${res.status}`);
+  return res.json();
+}

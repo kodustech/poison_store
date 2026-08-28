@@ -21,6 +21,13 @@ Rails.application.routes.draw do
   
   get 'monthly_sales_report', to: 'monthly_sales_report#index'
   get 'activity_report', to: 'activity_report#index'
+  get 'sobre', to: 'about#index'
+  get 'faq', to: 'faq#index'
 
   root 'medication_requests#new'
+
+  match '/404', to: 'errors#not_found', via: :all
+  match '/500', to: 'errors#internal_error', via: :all
+
+  match '*unmatched_route', to: 'errors#not_found', via: :all
 end 
