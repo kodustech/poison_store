@@ -1,0 +1,75 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Promoções de Suplementos</h1>
+    <%= link_to 'Nova Promoção', new_promotion_path, class: 'btn btn-primary' %>
+  </div>
+
+  <% if @promotions.any? %>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th>Nome da Promoção</th>
+            <th>Suplemento</th>
+            <th>Tipo de Desconto</th>
+            <th>Valor do Desconto</th>
+            <th>Preço Original</th>
+            <th>Preço Promocional</th>
+            <th>Período</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @promotions.each do |promotion| %>
+            <tr>
+              <td><strong><%= promotion.name %></strong></td>
+              <td>
+                <%= link_to promotion.supplement.name, supplement_path(promotion.supplement), class: 'text-decoration-none' %>
+              </td>
+              <td>
+                <span class="badge bg-secondary">
+                  <%= promotion.discount_type == 'percentage' ? 'Percentual' : 'Valor Fixo' %>
+                </span>
+              </td>
+              <td>
+                <% if promotion.discount_type == 'percentage' %>
+                  <%= number_with_precision(promotion.discount_value, precision: 1) %>%
+                <% else %>
+                  R$ <%= number_with_precision(promotion.discount_value, precision: 2) %>
+                <% end %>
+              </td>
+              <td>R$ <%= number_with_precision(promotion.supplement.price, precision: 2) %></td>
+              <td>
+                <strong class="text-success">
+                  R$ <%= number_with_precision(promotion.calculate_discounted_price(promotion.supplement.price), precision: 2) %>
+                </strong>
+              </td>
+              <td>
+                <small>
+                  <%= promotion.start_date.strftime('%d/%m/%Y') %> até<br>
+                  <%= promotion.end_date.strftime('%d/%m/%Y') %>
+                </small>
+              </td>
+              <td>
+                <span class="badge <%= promotion.status_badge_class %>">
+                  <%= promotion.status_label %>
+                </span>
+              </td>
+              <td>
+                <%= link_to 'Ver', promotion_path(promotion), class: 'btn btn-sm btn-info' %>
+                <%= link_to 'Editar', edit_promotion_path(promotion), class: 'btn btn-sm btn-warning' %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h4>Nenhuma promoção cadastrada</h4>
+      <p>Comece criando sua primeira promoção para suplementos.</p>
+      <%= link_to 'Criar Primeira Promoção', new_promotion_path, class: 'btn btn-primary' %>
+    </div>
+  <% end %>
+</div>

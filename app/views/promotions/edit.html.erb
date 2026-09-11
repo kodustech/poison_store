@@ -1,0 +1,170 @@
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header">
+          <h2>Editar Promoção</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @promotion, local: true, class: 'needs-validation', novalidate: true do |form| %>
+            <% if @promotion.errors.any? %>
+              <div class="alert alert-danger">
+                <h4>Erros encontrados:</h4>
+                <ul>
+                  <% @promotion.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <%= form.label :name, 'Nome da Promoção *', class: 'form-label' %>
+                <%= form.text_field :name, class: 'form-control', required: true %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :supplement_id, 'Suplemento *', class: 'form-label' %>
+                <%= form.select :supplement_id, 
+                    options_from_collection_for_select(@supplements, :id, :name, @promotion.supplement_id),
+                    { prompt: 'Selecione o suplemento' }, 
+                    { class: 'form-select', required: true, id: 'supplement_select' } %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= form.label :discount_type, 'Tipo de Desconto *', class: 'form-label' %>
+                <%= form.select :discount_type, 
+                    [['Percentual (%)', 'percentage'], ['Valor Fixo (R$)', 'fixed']],
+                    { selected: @promotion.discount_type }, 
+                    { class: 'form-select', required: true, id: 'discount_type_select' } %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :discount_value, 'Valor do Desconto *', class: 'form-label' %>
+                <div class="input-group">
+                  <%= form.number_field :discount_value, 
+                      class: 'form-control', 
+                      required: true, 
+                      min: 0, 
+                      step: 0.01,
+                      id: 'discount_value_input' %>
+                  <span class="input-group-text" id="discount_unit">
+                    <%= @promotion.discount_type == 'percentage' ? '%' : 'R$' %>
+                  </span>
+                </div>
+                <div class="form-text" id="discount_help">
+                  <%= @promotion.discount_type == 'percentage' ? 'Informe o percentual de desconto (ex: 15 para 15%)' : 'Informe o valor fixo de desconto em reais' %>
+                </div>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Preço Original</label>
+                <input type="text" class="form-control" id="original_price_display" readonly value="R$ <%= number_with_precision(@promotion.supplement.price, precision: 2) %>" style="background-color: #e9ecef;">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <%= form.label :start_date, 'Data de Início *', class: 'form-label' %>
+                <%= form.date_field :start_date, class: 'form-control', required: true %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <%= form.label :end_date, 'Data de Término *', class: 'form-label' %>
+                <%= form.date_field :end_date, class: 'form-control', required: true %>
+              </div>
+
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Preço Promocional</label>
+                <input type="text" class="form-control bg-success text-white fw-bold" id="promotional_price_display" readonly value="R$ <%= number_with_precision(@promotion.calculate_discounted_price(@promotion.supplement.price), precision: 2) %>">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :description, 'Descrição', class: 'form-label' %>
+              <%= form.text_area :description, class: 'form-control', rows: 3 %>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to 'Voltar', promotion_path(@promotion), class: 'btn btn-secondary' %>
+              <%= form.submit 'Atualizar Promoção', class: 'btn btn-primary' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const supplementSelect = document.getElementById('supplement_select');
+    const discountTypeSelect = document.getElementById('discount_type_select');
+    const discountValueInput = document.getElementById('discount_value_input');
+    const discountUnit = document.getElementById('discount_unit');
+    const discountHelp = document.getElementById('discount_help');
+    const originalPriceDisplay = document.getElementById('original_price_display');
+    const promotionalPriceDisplay = document.getElementById('promotional_price_display');
+
+    const supplements = <%= @supplements.map { |s| { id: s.id, price: s.price } }.to_json.html_safe %>;
+    const currentSupplementId = <%= @promotion.supplement_id %>;
+    const currentDiscountType = '<%= @promotion.discount_type %>';
+    const currentDiscountValue = <%= @promotion.discount_value %>;
+
+    function updatePriceDisplay() {
+      const supplementId = supplementSelect.value;
+      const discountType = discountTypeSelect.value;
+      const discountValue = parseFloat(discountValueInput.value) || 0;
+
+      if (supplementId) {
+        const supplement = supplements.find(s => s.id === parseInt(supplementId));
+        if (supplement) {
+          const originalPrice = supplement.price;
+          originalPriceDisplay.value = 'R$ ' + originalPrice.toFixed(2).replace('.', ',');
+
+          if (discountType && discountValue > 0) {
+            let promotionalPrice;
+            if (discountType === 'percentage') {
+              promotionalPrice = originalPrice * (1 - discountValue / 100);
+            } else {
+              promotionalPrice = Math.max(0, originalPrice - discountValue);
+            }
+            promotionalPriceDisplay.value = 'R$ ' + promotionalPrice.toFixed(2).replace('.', ',');
+          } else {
+            promotionalPriceDisplay.value = 'R$ 0,00';
+          }
+        }
+      } else {
+        originalPriceDisplay.value = 'R$ 0,00';
+        promotionalPriceDisplay.value = 'R$ 0,00';
+      }
+    }
+
+    function updateDiscountType() {
+      const discountType = discountTypeSelect.value;
+      if (discountType === 'percentage') {
+        discountUnit.textContent = '%';
+        discountHelp.textContent = 'Informe o percentual de desconto (ex: 15 para 15%)';
+        discountValueInput.setAttribute('max', '100');
+        discountValueInput.setAttribute('step', '0.1');
+      } else if (discountType === 'fixed') {
+        discountUnit.textContent = 'R$';
+        discountHelp.textContent = 'Informe o valor fixo de desconto em reais';
+        discountValueInput.removeAttribute('max');
+        discountValueInput.setAttribute('step', '0.01');
+      }
+      updatePriceDisplay();
+    }
+
+    supplementSelect.addEventListener('change', updatePriceDisplay);
+    discountTypeSelect.addEventListener('change', updateDiscountType);
+    discountValueInput.addEventListener('input', updatePriceDisplay);
+
+    // Inicializar
+    updateDiscountType();
+    updatePriceDisplay();
+  });
+</script>

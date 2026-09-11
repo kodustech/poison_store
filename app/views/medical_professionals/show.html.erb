@@ -12,7 +12,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <h5 class="card-title">Informações Profissionais</h5>
+              <h5 class="card-title">Informações Médicas</h5>
               <dl class="row">
                 <dt class="col-sm-4">CRM:</dt>
                 <dd class="col-sm-8">
@@ -41,7 +41,7 @@
             </div>
 
             <div class="col-md-6">
-              <h5 class="card-title">Informações de Contato</h5>
+              <h5 class="card-title">Informações de Contato e Endereço</h5>
               <dl class="row">
                 <% if @medical_professional.phone.present? %>
                   <dt class="col-sm-4">Telefone:</dt>
@@ -66,7 +66,7 @@
           <% if @medical_professional.notes.present? %>
             <div class="row mt-3">
               <div class="col-12">
-                <h5 class="card-title">Observações</h5>
+                <h5 class="card-title">Observações do Sistema</h5>
                 <p class="card-text"><%= @medical_professional.notes %></p>
               </div>
             </div>
