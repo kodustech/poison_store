@@ -22,6 +22,7 @@ class MedicationSale
   field :final_price, type: Float
 
   belongs_to :over_the_counter_medication
+  belongs_to :employee, optional: true
 
   validates :customer_name, presence: true
   validates :customer_cpf, presence: true
