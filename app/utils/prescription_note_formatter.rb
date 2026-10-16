@@ -12,14 +12,18 @@ module PrescriptionNoteFormatter
   def decode(note)
     return '' if note.nil?
 
-    decoded = CGI.unescapeHTML(note.to_s)
-    decoded = CGI.unescapeHTML(decoded)
+    decoded = note.to_s
+    loop do
+      unescaped = CGI.unescapeHTML(decoded)
+      break if unescaped == decoded
+      decoded = unescaped
+    end
     decoded.strip
   end
 
   # Removes HTML comments the POS sometimes leaves behind.
   def strip_comments(text)
-    text.gsub('<!--', '').gsub('-->', '')
+    text.gsub(/<!--.*?-->/m, '')
   end
 
   def truncate(text)
@@ -34,6 +38,6 @@ module PrescriptionNoteFormatter
 
   # The dashboard renders the result inside an HTML template.
   def for_dashboard(note)
-    "<p class=\"rx-note\">#{strip_comments(decode(note))}</p>"
+    "<p class=\"rx-note\">#{CGI.escapeHTML(strip_comments(decode(note))) }</p>"
   end
 end

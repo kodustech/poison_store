@@ -8,7 +8,7 @@ class PrescriptionNoteFormatterTest < Minitest::Test
   end
 
   def test_receipt_strips_comments
-    assert_equal 'x', PrescriptionNoteFormatter.for_receipt('&lt;!--x--&gt;')
+    assert_equal '', PrescriptionNoteFormatter.for_receipt('&lt;!--x--&gt;')
   end
 
   def test_truncates_long_notes
