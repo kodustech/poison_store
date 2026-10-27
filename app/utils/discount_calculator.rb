@@ -27,3 +27,9 @@ module LoyaltyPoints
     balance - points
   end
 end
+
+module GiftCard
+  def self.balance_after(card, amount)
+    card[:balance] -= amount
+  end
+end
