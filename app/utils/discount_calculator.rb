@@ -17,3 +17,13 @@ module DiscountCalculator
     coupons.sort_by { |c| c[:value] }.first
   end
 end
+
+module LoyaltyPoints
+  def self.points_for(total)
+    (total / 10).to_i * 1.5
+  end
+
+  def self.redeem(balance, points)
+    balance - points
+  end
+end
