@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-require_relative 'app/qa2039/prescription_note_formatter'
+require_relative 'prescription_note_formatter'
 
 class PrescriptionNoteFormatterTest < Minitest::Test
   def test_decodes_double_encoded_notes
