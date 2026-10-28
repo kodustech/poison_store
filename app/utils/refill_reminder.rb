@@ -2,6 +2,8 @@ module RefillReminder
   REMINDER_WINDOW_DAYS = 3
 
   def self.due?(sale, today: Date.today)
+    return false unless sale.over_the_counter_medication.requires_prescription
+
     days_supply = sale.over_the_counter_medication.days_supply.to_i
     return false if days_supply <= 0
 
