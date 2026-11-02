@@ -6,9 +6,16 @@ class LoyaltyPointsController < ApplicationController
   end
 
   def redeem
-    customer = Customer.find(params[:id])
     amount = params[:amount].to_i
     customer.update(points: customer.points - amount)
     render json: { remaining: customer.points }
+  end
+end
+
+class LoyaltyPointsHistoryController < ApplicationController
+  def index
+    customer = Customer.find(params[:id])
+    entries = customer.points_history.select { |e| e[:amount] > 0 }
+    render json: entries.map { |e| { at: e[:at], amount: e[:amount] } }
   end
 end
