@@ -1,7 +1,7 @@
 class LoyaltyPointsController < ApplicationController
   def show
     customer = Customer.find(params[:id])
-    points = customer.purchases.sum(:total) / 10
+    points = (customer.purchases.sum(:total) / 10).floor
     render json: { customer_id: customer.id, points: points }
   end
 
