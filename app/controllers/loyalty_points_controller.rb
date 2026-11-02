@@ -19,3 +19,12 @@ class LoyaltyPointsHistoryController < ApplicationController
     render json: entries.map { |e| { at: e[:at], amount: e[:amount] } }
   end
 end
+
+class LoyaltyPointsExpiryController < ApplicationController
+  def expire
+    customer = Customer.find(params[:id])
+    expired = customer.points_history.select { |e| e[:at] < 1.year.ago }
+    customer.update(points: customer.points - expired.sum { |e| e[:amount] })
+    render json: { expired: expired.size }
+  end
+end
