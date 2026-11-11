@@ -1,0 +1,430 @@
+/**
+ * code-review (domain) — maps raw agent findings to CodeSuggestion shape.
+ *
+ * Phase 2 of the provider decomposition. Pulls the "what the agent emitted →
+ * what the pipeline consumes" translation out of BaseCodeReviewAgentProvider:
+ * path validation/canonicalization, kody-rules UUID recovery, label/severity
+ * resolution. No NestJS, no LLM — a logger is injected so it stays unit-testable.
+ */
+import {
+    CodeSuggestion,
+    FileChange,
+} from '@libs/core/infrastructure/config/types/general/codeReview.type';
+import {
+    IKodyRule,
+    resolveKodyRuleSeverityLevel,
+} from '@libs/kodyRules/domain/interfaces/kodyRules.interface';
+
+import { normalizeRepoPath } from '@libs/code-review/infrastructure/agents/engine/coverage-ledger';
+import type { ReviewFindingLabel } from '@libs/code-review/infrastructure/agents/review-agent.contract';
+
+// ── Bounded Levenshtein + UUID recovery ──────────────────────────────────────
+
+// Bounded Levenshtein distance — returns early once it exceeds `max`.
+// Used to recover a kody_rules ruleUuid the LLM corrupted while echoing
+// it (LLMs occasionally drop/transpose a character in a 36-char UUID).
+function boundedEditDistance(a: string, b: string, max: number): number {
+    if (Math.abs(a.length - b.length) > max) {
+        return max + 1;
+    }
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+    for (let i = 1; i <= a.length; i++) {
+        const curr = [i];
+        let rowMin = i;
+
+        for (let j = 1; j <= b.length; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            const v = Math.min(
+                prev[j] + 1,
+                curr[j - 1] + 1,
+                prev[j - 1] + cost,
+            );
+            curr.push(v);
+            if (v < rowMin) {
+                rowMin = v;
+            }
+        }
+        if (rowMin > max) {
+            return max + 1;
+        } // whole row already over budget
+        prev = curr;
+    }
+    return prev[b.length];
+}
+
+// Recover the intended rule when the LLM-emitted `ruleUuid` is not an
+// exact key but is within a tiny edit distance of EXACTLY ONE known rule.
+// UUIDs don't collide within distance 2, and the per-PR rule set is small,
+// so a unique near-match is an unambiguous recovery; ambiguity (0 or >1
+// matches) returns null so the caller drops the suggestion. See #1170.
+export function recoverRuleUuid(
+    emitted: string,
+    knownUuids: Iterable<string>,
+): string | null {
+    const MAX_DISTANCE = 2;
+    let match: string | null = null;
+    for (const known of knownUuids) {
+        if (boundedEditDistance(emitted, known, MAX_DISTANCE) <= MAX_DISTANCE) {
+            if (match) {
+                return null;
+            } // more than one near-match → ambiguous
+            match = known;
+        }
+    }
+    return match;
+}
+
+// ── Label resolution ─────────────────────────────────────────────────────────
+
+export interface LabelPolicy {
+    /** The agent's fixed category (bug/security/performance/kody_rules/generalist). */
+    categoryLabel: string;
+    /** Labels this run may emit (for mixed/generalist reviewers). */
+    allowedLabels: ReviewFindingLabel[];
+    /** Whether the agent emits per-finding labels (generalist) vs a fixed one. */
+    supportsMixed: boolean;
+}
+
+/** Labels a mixed reviewer cannot claim: `generalist` is the agent's own
+ *  category, and a `kody_rules` finding with no rule behind it would skip the
+ *  parse schema. Both become `bug`. */
+const UNCLAIMABLE_LABELS = new Set<string>(['generalist', 'kody_rules']);
+
+/** Resolve the label of a suggestion under the agent's label policy.
+ *  Single-category agents always return their category. A mixed reviewer's
+ *  label passes through lowercased, a missing or unclaimable one becomes
+ *  `bug`; normalizeFinderLabels, after anchoring, replaces a label off the list
+ *  with `bug` and discards one the team turned off (#1821). */
+export function resolveSuggestionLabel(
+    suggestion: { label?: string },
+    policy: LabelPolicy,
+): string {
+    if (!policy.supportsMixed) {
+        return policy.categoryLabel;
+    }
+    const rawLabel =
+        typeof suggestion.label === 'string'
+            ? suggestion.label.trim().toLowerCase()
+            : '';
+    if (!rawLabel || UNCLAIMABLE_LABELS.has(rawLabel)) {
+        return 'bug';
+    }
+    return rawLabel;
+}
+
+// ── Finding mapping ──────────────────────────────────────────────────────────
+
+/** Loose shape of a raw finding emitted by the agent loop. */
+export interface RawFinding {
+    suggestionContent?: string;
+    ruleUuid?: string;
+    revisesSuggestionId?: string;
+    relevantFile?: string;
+    oneSentenceSummary?: string;
+    language?: string;
+    existingCode?: string;
+    improvedCode?: string;
+    relevantLinesStart?: number;
+    relevantLinesEnd?: number;
+    severity?: string;
+    label?: string;
+    /** Custom agents: whether the finding applies a team rule, and which. */
+    kind?: CodeSuggestion['kind'];
+    source?: CodeSuggestion['source'];
+    /** On a discarded finding: why the check set it aside. */
+    discardReason?: string;
+}
+
+export interface MappableAgentResult {
+    findings?: { suggestions?: RawFinding[] };
+    discardedBySeverity?: RawFinding[];
+    droppedByVerify?: RawFinding[];
+    unverifiedByVerify?: RawFinding[];
+    droppedByQuoteCheck?: RawFinding[];
+}
+
+export interface FindingMapperContext {
+    changedFiles: FileChange[];
+    kodyRules?: Partial<IKodyRule>[];
+    prNumber: number;
+    /** The generalist finder's lean output (#1821): a finding keeps only its
+     *  five fields, the agent prompt copy, its severity and its revision link;
+     *  snippets, fix and title come at enrichment. Kody Rules and custom
+     *  agents keep the full finding. */
+    leanOutput?: boolean;
+    /** The review's org and team, on the mapper's log lines. */
+    organizationId?: string;
+    teamId?: string;
+    isKodyRules: boolean;
+    /** Name used in warning logs (the agent identity). */
+    identityName: string;
+    labelPolicy: LabelPolicy;
+    /** Injected so the mapper stays free of NestJS; optional for tests.
+     *  Typed loosely to accept the app's SimpleLogger.warn shape. */
+    logger?: { warn: (entry: any) => void; log?: (entry: any) => void };
+}
+
+export interface MappedFindings {
+    suggestions: Partial<CodeSuggestion>[];
+    discardedBySeverity: Partial<CodeSuggestion>[];
+    discardedByVerify: Partial<CodeSuggestion>[];
+    /** Findings whose verify run failed (#2171). */
+    discardedByVerifyError: Partial<CodeSuggestion>[];
+    /** Findings dropped because the file they named is not in the PR. */
+    droppedForPath: number;
+}
+
+/**
+ * Translate raw agent findings into pipeline `CodeSuggestion`s:
+ *  - drop suggestions whose `relevantFile` isn't in the PR (post-normalization)
+ *  - kody-rules: require a known `ruleUuid` (with edit-distance recovery)
+ *  - canonicalize the path back to the provider's original filename
+ *  - resolve label + severity (kody-rule severity overrides the LLM's)
+ */
+export function mapAgentFindings(
+    agentResult: MappableAgentResult,
+    ctx: FindingMapperContext,
+): MappedFindings {
+    // Key on the normalized path so we tolerate LLM-emitted variations
+    // (missing leading slash, backslashes), but keep the provider's original
+    // filename as the value (downstream comment posting needs the exact shape).
+    const validFilesByNormalized = new Map<string, string>(
+        ctx.changedFiles.map((f) => [
+            normalizeRepoPath(f.filename),
+            f.filename,
+        ]),
+    );
+    const kodyRulesByUuid = new Map(
+        (ctx.kodyRules || []).filter((r) => r.uuid).map((r) => [r.uuid!, r]),
+    );
+    const warn = (message: string, metadata: Record<string, unknown>) =>
+        ctx.logger?.warn({ message, context: ctx.identityName, metadata });
+    let droppedForPath = 0;
+
+    // The model sometimes cites only the tail of the path (`EventManager.ts`
+    // for `packages/core/EventManager.ts`). Complete it when exactly one
+    // changed file ends with that tail; an ambiguous tail stays unresolved.
+    const resolvedByEmitted = new Map<string, string | undefined>();
+    const resolveChangedFile = (relevantFile?: string): string | undefined => {
+        const emitted = normalizeRepoPath(relevantFile);
+        if (!emitted) {
+            return undefined;
+        }
+        if (resolvedByEmitted.has(emitted)) {
+            return resolvedByEmitted.get(emitted);
+        }
+        let resolved = validFilesByNormalized.get(emitted);
+        if (!resolved) {
+            const tails = [...validFilesByNormalized.keys()].filter((f) =>
+                f.endsWith(`/${emitted}`),
+            );
+            if (tails.length === 1) {
+                resolved = validFilesByNormalized.get(tails[0]);
+                ctx.logger?.log?.({
+                    message: `[AGENT] Completed partial relevantFile "${relevantFile}" → "${resolved}"`,
+                    context: ctx.identityName,
+                    metadata: {
+                        organizationId: ctx.organizationId,
+                        teamId: ctx.teamId,
+                        prNumber: ctx.prNumber,
+                    },
+                });
+            }
+        }
+        resolvedByEmitted.set(emitted, resolved);
+        return resolved;
+    };
+
+    const rawSuggestions = (agentResult.findings?.suggestions || []).filter(
+        (s) => {
+            if (!s.suggestionContent) {
+                return false;
+            }
+
+            if (ctx.isKodyRules) {
+                const ruleUuid =
+                    typeof s.ruleUuid === 'string' ? s.ruleUuid.trim() : '';
+
+                if (!ruleUuid) {
+                    // Model omitted the uuid echo. With exactly ONE candidate
+                    // rule in play there is no ambiguity — attribute instead
+                    // of dropping (observed live: both violations of the only
+                    // selected rule were found and then discarded here, so
+                    // the customer saw "rule never fires" even after the
+                    // path-matching fix).
+                    if (kodyRulesByUuid.size === 1) {
+                        const only = [...kodyRulesByUuid.keys()][0];
+                        warn(
+                            `[AGENT] kody_rules suggestion missing ruleUuid — attributing to the single selected rule ${only}`,
+                            { prNumber: ctx.prNumber },
+                        );
+                        s.ruleUuid = only;
+                    } else {
+                        warn(
+                            `[AGENT] Dropping kody_rules suggestion without ruleUuid (${kodyRulesByUuid.size} candidate rules, ambiguous): "${(s.oneSentenceSummary || s.suggestionContent).slice(0, 140)}"`,
+                            { prNumber: ctx.prNumber },
+                        );
+                        return false;
+                    }
+                }
+                const resolvedRuleUuid =
+                    typeof s.ruleUuid === 'string' ? s.ruleUuid.trim() : '';
+
+                if (!kodyRulesByUuid.has(resolvedRuleUuid)) {
+                    const recovered = recoverRuleUuid(
+                        resolvedRuleUuid,
+                        kodyRulesByUuid.keys(),
+                    );
+
+                    if (recovered) {
+                        warn(
+                            `[AGENT] Recovered corrupted kody_rules ruleUuid=${resolvedRuleUuid} → ${recovered} (LLM UUID echo drift)`,
+                            { prNumber: ctx.prNumber },
+                        );
+                        s.ruleUuid = recovered;
+                    } else {
+                        warn(
+                            `[AGENT] Dropping kody_rules suggestion with unknown ruleUuid=${resolvedRuleUuid}: "${(s.oneSentenceSummary || s.suggestionContent).slice(0, 140)}"`,
+                            {
+                                prNumber: ctx.prNumber,
+                                ruleUuid: resolvedRuleUuid,
+                                knownRuleCount: kodyRulesByUuid.size,
+                            },
+                        );
+                        return false;
+                    }
+                }
+                // PR-level kody_rules omit relevantFile by design.
+                const kodyRulePathMatch =
+                    !s.relevantFile || !!resolveChangedFile(s.relevantFile);
+
+                if (!kodyRulePathMatch) {
+                    droppedForPath++;
+                    warn(
+                        `@@PATH_MISMATCH@@ Dropping kody_rules suggestion — relevantFile not in changedFiles after normalization`,
+                        {
+                            prNumber: ctx.prNumber,
+                            relevantFile: s.relevantFile,
+                            normalizedRelevantFile: normalizeRepoPath(
+                                s.relevantFile,
+                            ),
+                            changedFiles: [...validFilesByNormalized.values()],
+                            suggestionPreview: (
+                                s.oneSentenceSummary ||
+                                s.suggestionContent ||
+                                ''
+                            ).slice(0, 140),
+                        },
+                    );
+                }
+                return kodyRulePathMatch;
+            }
+
+            const pathMatch = !!resolveChangedFile(s.relevantFile);
+
+            if (!pathMatch && s.relevantFile) {
+                droppedForPath++;
+                warn(
+                    `@@PATH_MISMATCH@@ Dropping suggestion — relevantFile not in changedFiles after normalization`,
+                    {
+                        prNumber: ctx.prNumber,
+                        relevantFile: s.relevantFile,
+                        normalizedRelevantFile: normalizeRepoPath(
+                            s.relevantFile,
+                        ),
+                        changedFiles: [...validFilesByNormalized.values()],
+                        severity: s.severity,
+                        suggestionPreview: (
+                            s.oneSentenceSummary ||
+                            s.suggestionContent ||
+                            ''
+                        ).slice(0, 140),
+                    },
+                );
+            }
+            return pathMatch;
+        },
+    );
+
+    const suggestions = rawSuggestions.map((s) => {
+        const matchedRule = s.ruleUuid
+            ? kodyRulesByUuid.get(s.ruleUuid)
+            : undefined;
+
+        // Replace the LLM-emitted relevantFile with the provider's original
+        // filename so downstream comment posting uses the exact path shape.
+        const canonicalRelevantFile = s.relevantFile
+            ? (resolveChangedFile(s.relevantFile) ?? s.relevantFile)
+            : s.relevantFile;
+
+        if (ctx.leanOutput) {
+            return {
+                relevantFile: canonicalRelevantFile,
+                suggestionContent: s.suggestionContent,
+                relevantLinesStart: s.relevantLinesStart,
+                relevantLinesEnd: s.relevantLinesEnd,
+                label: resolveSuggestionLabel(s, ctx.labelPolicy),
+                severity: s.severity || 'medium',
+                llmPrompt: s.suggestionContent,
+                ...(s.oneSentenceSummary && {
+                    oneSentenceSummary: s.oneSentenceSummary,
+                }),
+                ...(s.revisesSuggestionId && {
+                    revisesSuggestionId: s.revisesSuggestionId,
+                }),
+            } as Partial<CodeSuggestion>;
+        }
+
+        return {
+            relevantFile: canonicalRelevantFile,
+            language: s.language || '',
+            suggestionContent: s.suggestionContent,
+            ...(s.existingCode && { existingCode: s.existingCode }),
+            ...(s.improvedCode && { improvedCode: s.improvedCode }),
+            oneSentenceSummary: s.oneSentenceSummary || '',
+            relevantLinesStart: s.relevantLinesStart,
+            relevantLinesEnd: s.relevantLinesEnd,
+            label: resolveSuggestionLabel(s, ctx.labelPolicy),
+            severity: matchedRule
+                ? resolveKodyRuleSeverityLevel(matchedRule)
+                : s.severity || 'medium',
+            llmPrompt: s.suggestionContent,
+            ...(s.ruleUuid && { brokenKodyRulesIds: [s.ruleUuid] }),
+            ...(s.revisesSuggestionId && {
+                revisesSuggestionId: s.revisesSuggestionId,
+            }),
+            // Lane credit in dedup and the rule citation read these.
+            ...(s.kind && { kind: s.kind }),
+            ...(s.source && { source: s.source }),
+        } as Partial<CodeSuggestion>;
+    });
+
+    const mapDiscarded = (list?: RawFinding[]): Partial<CodeSuggestion>[] =>
+        (list || []).map((s) => ({
+            relevantFile: s.relevantFile,
+            suggestionContent: s.suggestionContent,
+            severity: (s.severity || 'medium') as CodeSuggestion['severity'],
+            label: resolveSuggestionLabel(s, ctx.labelPolicy),
+            oneSentenceSummary: s.oneSentenceSummary || '',
+            relevantLinesStart: s.relevantLinesStart,
+            relevantLinesEnd: s.relevantLinesEnd,
+            ...(s.kind && { kind: s.kind }),
+            ...(s.source && { source: s.source }),
+            ...(s.discardReason && { discardReason: s.discardReason }),
+        }));
+
+    return {
+        suggestions,
+        discardedBySeverity: mapDiscarded(agentResult.discardedBySeverity),
+        // A convention finding whose quoted rule is not in the guide was
+        // checked and refuted like a verify drop; counted apart it vanished
+        // from the agent's "dropped by verification" figure.
+        discardedByVerify: mapDiscarded([
+            ...(agentResult.droppedByVerify ?? []),
+            ...(agentResult.droppedByQuoteCheck ?? []),
+        ]),
+        discardedByVerifyError: mapDiscarded(agentResult.unverifiedByVerify),
+        droppedForPath,
+    };
+}

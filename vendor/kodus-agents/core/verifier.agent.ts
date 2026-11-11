@@ -1,0 +1,476 @@
+/**
+ * code-review (domain) — Verifier agent assembled on agent-harness.
+ *
+ * Step 5b: the verify stage as a verifier AgentSpec run on the SAME runner
+ * (via verifyFindings), reusing the existing HV2 verifier prompt
+ * (buildVerifierPrompt) and the same investigation tool surface as the finder.
+ * This kills the duplicated hand-rolled verify loop.
+ */
+import type {
+    AgentRunner,
+    AgentSpec,
+} from '@libs/agent-harness/domain/contracts/agent.contract';
+import type { JSONSchema } from '@libs/agent-harness/domain/contracts/json-schema.contract';
+import type { RunState } from '@libs/agent-harness/domain/contracts/run-state.contract';
+import type {
+    ToolContext,
+    ToolRegistry,
+} from '@libs/agent-harness/domain/contracts/tool.contract';
+import type {
+    Verdict,
+    Verifier,
+} from '@libs/agent-harness/domain/contracts/verifier.contract';
+import { BudgetPolicy } from '@libs/agent-harness/infrastructure/policies/budget.policy';
+import { ForceTextFinalizePolicy } from '@libs/agent-harness/infrastructure/policies/force-text-finalize.policy';
+import { InMemoryToolRegistry } from '@libs/agent-harness/infrastructure/tools/in-memory-tool-registry';
+
+import {
+    buildVerifierPrompt,
+    VERIFIER_REPEAT_RULE,
+    VERIFIER_REPO_INSTRUCTION_RULE,
+    verifierLaneRule,
+} from '@libs/code-review/infrastructure/agents/prompts/verifier-prompt';
+import {
+    formatPreviousDecisions,
+    renderRepoInstructionFiles,
+} from '@libs/code-review/infrastructure/agents/prompts/prompt-builder';
+import type { RepoInstructionsContext } from '@libs/code-review/infrastructure/agents/collaborators/repo-instructions';
+import { LLM_ENVELOPE_TAG } from '@libs/llm/structured-output-repair';
+import {
+    recoverVerdictObject,
+    verdictFromText,
+} from '@libs/agent-harness/infrastructure/verify/llm-verdict';
+import { createLogger } from '@libs/core/log/logger';
+import type { FinderSuggestion } from '@libs/code-review/infrastructure/agents/core/finder.agent';
+import { supportsStrictToolsForRun } from '@libs/code-review/infrastructure/agents/core/model-strictness';
+import type { PrDecisionRecord } from '@libs/code-review/domain/contracts/pr-decision-store.contract';
+import {
+    buildLangfuseTelemetry,
+    toAiSdkTelemetryArgs,
+    type LangfuseTelemetryMetadata,
+} from '@libs/core/log/langfuse';
+
+const logger = createLogger('VerifierAgent');
+
+export const VERIFY_DONE_TOOL = 'submitVerdict' as const;
+
+const VERDICT_SCHEMA: JSONSchema = {
+    type: 'object',
+    // Required by provider strict tool use (see finder.agent SUBMIT_RESULT_SCHEMA).
+    additionalProperties: false,
+    properties: {
+        keep: { type: 'boolean' },
+        rationale: { type: 'string' },
+        confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['keep', 'rationale'],
+};
+
+const submitVerdictTool = {
+    name: VERIFY_DONE_TOOL,
+    description:
+        'Submit your verdict for the candidate finding (keep=true unless you can REFUTE it).',
+    inputSchema: VERDICT_SCHEMA,
+    execute: async () => ({ output: 'verdict recorded' }),
+};
+
+export interface BuildVerifierSpecParams {
+    modelId: string;
+    /** Failover target model id (when the slot has one). Strict tool use is only
+     *  enabled when BOTH it and `modelId` support it — see supportsStrictToolsForRun. */
+    fallbackModelId?: string;
+    /** Cost-span run name (e.g. `code-review-bug-verify`) + agentName for the
+     *  verify leaf usage span (bucketed to `review` by deriveArea). */
+    runName?: string;
+    agentName?: string;
+    /** Same investigation tools as the finder (grep/readFile/...). */
+    tools: ToolRegistry;
+    maxSteps?: number;
+    /** Provider options (reasoning/thinking config) forwarded to the model. */
+    providerOptions?: Readonly<Record<string, unknown>>;
+    /** System prompt override — the convention verifier passes its own. The
+     *  HV2 prompt when absent. */
+    systemPrompt?: string;
+}
+
+export function buildVerifierAgentSpec(
+    params: BuildVerifierSpecParams,
+): AgentSpec {
+    // The HV2 system prompt is static (the per-finding evidence goes in the
+    // run prompt), so we build it once with a placeholder bundle.
+    const system = params.systemPrompt ?? buildVerifierPrompt('', 0).system;
+    const tools = new InMemoryToolRegistry([
+        ...params.tools.list(),
+        // Strict/structured done-tool for strict-capable models (Gemini
+        // VALIDATED mode) so the verdict can't be omitted or emitted as prose.
+        {
+            ...submitVerdictTool,
+            strict: supportsStrictToolsForRun(
+                params.modelId,
+                params.fallbackModelId,
+            ),
+        },
+    ]);
+    return {
+        id: 'verifier',
+        // Cost-span identity: LLM.run records the ONE verify usage span with this
+        // runName; deriveArea buckets `code-review*` under `review`.
+        runName: params.runName ?? 'code-review-verify',
+        agentName: params.agentName,
+        phase: 'verify',
+        systemPrompt: system,
+        tools,
+        policies: [
+            new BudgetPolicy(),
+            // Without this the verify run can spend every step investigating and
+            // be cut off with NO verdict — 20% of production runs (154 sampled,
+            // 2026-09-19); a run cut off at the step cap discards the candidate.
+            // Force TEXT, not the tool: this prompt asks for a JSON verdict in
+            // the reply and never mentions submitVerdict, and constraining the
+            // output is measured harm (see model-strictness.ts).
+            new ForceTextFinalizePolicy({
+                answerDescription: 'your final JSON verdict',
+                // Some models (Kimi, DeepSeek) ignore the note and call tools
+                // until the budget ends with no verdict, which production
+                // discards; on the last step they can only answer.
+                noToolsOnLastStep: true,
+            }),
+        ],
+        maxSteps: params.maxSteps ?? 6,
+        // CAPTURE: the runner materializes submitVerdict's payload into
+        // RunState.artifacts — extractVerdict reads that, never re-scans steps.
+        resultToolName: VERIFY_DONE_TOOL,
+        providerOptions: params.providerOptions,
+    };
+}
+
+function repoInstructionEvidence(
+    finding: FinderSuggestion,
+    repoInstructions?: RepoInstructionsContext,
+): string {
+    if (finding.label !== 'repo_instruction') return '';
+    const files = repoInstructions?.files ?? [];
+    const block = files.length
+        ? `<RepositoryInstructions>\n${renderRepoInstructionFiles(files).join('\n')}\n</RepositoryInstructions>`
+        : '<RepositoryInstructions>No instruction files were provided for this review.</RepositoryInstructions>';
+    return `Label: repo_instruction\n${VERIFIER_REPO_INSTRUCTION_RULE}\n${block}`;
+}
+
+/** The evidence bundle: the finding's fields the verifier receives.
+ *  `previousDecisions` (issue #1313) is the PR's history, not filtered by
+ *  file — see LlmVerifier.verify() (#2020). `laneFocus` (a custom agent kept
+ *  to its lane, #2172) adds the out-of-focus drop criterion; absent, the
+ *  prompt is unchanged. `repoInstructions` is read only for a
+ *  `repo_instruction` candidate. */
+export function bundleFor(
+    finding: FinderSuggestion,
+    previousDecisions?: readonly PrDecisionRecord[],
+    options: VerifierPromptOptions = {},
+): string {
+    const laneFocus =
+        typeof options?.laneFocus === 'string' ? options.laneFocus : '';
+    return [
+        `File: ${finding.relevantFile}`,
+        finding.relevantLinesStart != null
+            ? `Lines: ${finding.relevantLinesStart}-${finding.relevantLinesEnd ?? finding.relevantLinesStart}`
+            : '',
+        `Claim: ${finding.suggestionContent}`,
+        repoInstructionEvidence(finding, options?.repoInstructions),
+        formatPreviousDecisions(previousDecisions),
+        previousDecisions?.length ? VERIFIER_REPEAT_RULE : '',
+        laneFocus.trim() ? verifierLaneRule(laneFocus) : '',
+    ]
+        .filter(Boolean)
+        .join('\n');
+}
+
+export type VerifierPromptOptions = {
+    /** A custom agent kept to its lane (#2172) adds the out-of-focus drop
+     *  criterion; absent, the prompt is unchanged. */
+    laneFocus?: string;
+    /** Read only for a `repo_instruction` candidate. */
+    repoInstructions?: RepoInstructionsContext;
+};
+
+/** Format a finding into the verifier's per-run task prompt (HV2 evidence). */
+export function verifierPromptFor(
+    finding: FinderSuggestion,
+    previousDecisions?: readonly PrDecisionRecord[],
+    options: VerifierPromptOptions = {},
+): string {
+    return buildVerifierPrompt(
+        bundleFor(finding, previousDecisions, options),
+        0,
+    ).prompt;
+}
+
+/** Extract the verdict from a verifier run: the run's materialized artifacts
+ *  (the "result tool" convention — same as the finder) first, then the final
+ *  step's TEXT. Default KEEP (refute-to-drop): only an explicit keep:false drops
+ *  the finding.
+ *
+ *  The text path exists because the verifier prompt asks for JSON ("Return JSON
+ *  only at the end") while the tool list offers submitVerdict, and models that
+ *  are not under strict tool use pick the text form — Anthropic and the
+ *  OpenAI-compatible providers, per model-strictness.ts. Reading only the tool
+ *  form published every refutation those models wrote (issue #1937). */
+export function extractVerdict(
+    state: RunState,
+    /** Caller's telemetry (org/team/PR/repo). Optional so the eval and the unit
+     *  tests can call this with a RunState alone, but ALWAYS threaded in
+     *  production by LlmVerifier.verify: without it a recovered verdict is a log
+     *  line nobody can trace back to the organization that produced it. */
+    telemetry?: LangfuseTelemetryMetadata,
+): Verdict {
+    // The verifier's investigation tools for THIS finding — carried on the
+    // verdict so the domain can attribute per-finding verifier evidence (which
+    // files it read/grepped) to the observability trace. submitVerdict itself
+    // is excluded (it's the result tool, not investigation).
+    const toolCalls = collectVerifierToolCalls(state);
+    // The verifier's own run failed (provider error, 429, abort): nothing was
+    // judged. Still fail open, as the Verifier port requires, but say so —
+    // runFinderWithVerify keeps these out of the published set (#2171). A
+    // partial verdict tool call made before the failure is not trusted.
+    if (state.status === 'error') {
+        const error = state.trace.find((e) => e.kind === 'error');
+        const message =
+            (error?.detail?.message as string | undefined) ?? 'unknown error';
+        logger.warn({
+            message: `verifier run failed, finding left unverified: ${message}`,
+            context: 'VerifierAgent',
+            metadata: { parseMode: 'verify-error', ...telemetry },
+        });
+        return {
+            keep: true,
+            rationale: `verification unavailable: ${message}`,
+            toolCalls,
+            parseMode: 'verify-error',
+        };
+    }
+    // SHAPE recovery (#1786): a non-strict model may wrap ({result:{keep}}),
+    // rename (decision/verdict/shouldKeep), stringify, or bare-array the
+    // verdict — readVerdictObject recovers the scalar `keep` before the boolean
+    // check so a real keep:false is not lost to the fail-open default below.
+    const onRecover = (reason: string) =>
+        logger.warn({
+            message: `${LLM_ENVELOPE_TAG} recovered off-schema verifier verdict (${reason})`,
+            context: 'VerifierAgent',
+            metadata: { reason, ...telemetry },
+        });
+    for (let i = state.artifacts.length - 1; i >= 0; i--) {
+        const artifact = state.artifacts[i];
+        if (artifact.type !== VERIFY_DONE_TOOL) continue;
+        const fromTool = recoverVerdictObject(artifact.payload, onRecover, {
+            coerceKeep: true,
+        });
+        if (fromTool) {
+            return { ...fromTool, toolCalls, parseMode: 'tool' };
+        }
+    }
+    const fromText = verdictFromText(state, onRecover, { coerceKeep: true });
+    if (fromText) {
+        logger.log({
+            message: `verifier verdict recovered from text (keep=${fromText.keep})`,
+            context: 'VerifierAgent',
+            metadata: {
+                parseMode: 'text',
+                keep: fromText.keep,
+                ...telemetry,
+            },
+        });
+        return { ...fromText, toolCalls, parseMode: 'text' };
+    }
+    // A run that did not finish (out of steps, stopped by a policy) and left
+    // no verdict judged nothing: unavailable, as an errored run is. One that
+    // completed and answered without a readable verdict keeps the default.
+    if (state.status !== 'completed') {
+        logger.warn({
+            message: `verifier run ended ${state.status} without a verdict, finding left unverified`,
+            context: 'VerifierAgent',
+            metadata: { parseMode: 'verify-error', ...telemetry },
+        });
+        return {
+            keep: true,
+            rationale: `verification unavailable: verifier ended ${state.status} without a verdict`,
+            toolCalls,
+            parseMode: 'verify-error',
+        };
+    }
+    logger.warn({
+        message: `${LLM_ENVELOPE_TAG} verifier completed without a readable verdict, finding kept by default`,
+        context: 'VerifierAgent',
+        metadata: {
+            parseMode: 'default-keep',
+            verdictArtifacts: state.artifacts.filter(
+                (a) => a.type === VERIFY_DONE_TOOL,
+            ).length,
+            ...telemetry,
+        },
+    });
+    return {
+        keep: true,
+        rationale: 'no parseable verdict — kept by default',
+        toolCalls,
+        parseMode: 'default-keep',
+    };
+}
+
+/** Flatten the verifier run's investigation tool calls into the generic
+ *  Verdict.toolCalls shape (name/args/result). */
+function collectVerifierToolCalls(state: RunState): Verdict['toolCalls'] {
+    const out: Array<{
+        name: string;
+        args?: Record<string, unknown>;
+        result?: string;
+    }> = [];
+    for (const step of state.steps) {
+        for (const tc of step.message.toolCalls ?? []) {
+            if (tc.name === VERIFY_DONE_TOOL) continue;
+            out.push({
+                name: tc.name,
+                args:
+                    tc.input && typeof tc.input === 'object'
+                        ? (tc.input as Record<string, unknown>)
+                        : undefined,
+                result: tc.output,
+            });
+        }
+    }
+    return out;
+}
+
+export interface LlmVerifierParams {
+    modelId: string;
+    /** Failover target model id — threaded to the verifier spec so strict tool
+     *  use accounts for it (a Gemini→OpenAI failover must not send strict). */
+    fallbackModelId?: string;
+    tools: ToolRegistry;
+    /** Depth of every verify (light). Default 7: six tool steps to reach where
+     *  the finding's facts are decided, and the verdict. */
+    lightMaxSteps?: number;
+    /** Depth of the full verify. Default 10. */
+    fullMaxSteps?: number;
+    /** When true, use the full depth. Used by the evidence-gate re-verify,
+     *  which forces a thorough second look. */
+    forceFull?: boolean;
+    /** Provider options (reasoning/thinking config) forwarded to the model. */
+    providerOptions?: Readonly<Record<string, unknown>>;
+    /** System-message provider options (e.g. Anthropic prompt caching). */
+    /** Langfuse telemetry context (org/team/PR/repo) — each per-finding verify
+     *  run is named so the trace shows WHICH finding each verdict judged. */
+    telemetryMetadata?: LangfuseTelemetryMetadata;
+    /** Agent name (finder/security/...) — prefixes the verify observation name. */
+    agentName?: string;
+    /** Cost-span run name base (e.g. `code-review-bug`). The verify runs record
+     *  their leaf usage span under `${usageRunName}-verify` so `deriveArea`
+     *  buckets them to `review` (verify is part of the review cost). */
+    usageRunName?: string;
+    /** Suggestions already posted on THIS PR in a previous review round
+     *  (issue #1313). `verify()` filters this down to the candidate's own file
+     *  before rendering it as evidence — matching by line range is deliberately
+     *  NOT done here (line numbers shift across commits); the model judges
+     *  whether a same-file record is "the same issue" semantically. */
+    previousDecisions?: PrDecisionRecord[];
+    /** The coding-agent instructions the finder reviewed against; evidence
+     *  for `repo_instruction` candidates only. */
+    repoInstructions?: RepoInstructionsContext;
+    /** A custom agent kept to its lane (#2172): its focus, against which each
+     *  finding is also judged in the same run (see verifierLaneRule). */
+    laneFocus?: string;
+}
+
+/** The LLM-judge Verifier (HV2): runs a verifier AgentSpec once per finding on
+ *  the shared runner. ONE implementation of the Verifier port.
+ *
+ *  Every finding gets the LIGHT verify; `forceFull` gives the FULL one (the
+ *  evidence gate uses it). The lean finder output (#1821) carries no
+ *  confidence, so depth no longer reads it.
+ *
+ *  It accumulates token usage across every verify() call so the caller can
+ *  report the verify sub-step's cost. */
+export class LlmVerifier implements Verifier<FinderSuggestion> {
+    private readonly accUsage: {
+        inputTokens: number;
+        outputTokens: number;
+        reasoningTokens: number;
+        cacheReadTokens: number;
+    } = {
+        inputTokens: 0,
+        outputTokens: 0,
+        reasoningTokens: 0,
+        cacheReadTokens: 0,
+    };
+
+    private readonly lightSpec: AgentSpec;
+    private readonly fullSpec: AgentSpec;
+
+    constructor(
+        private readonly runner: AgentRunner,
+        private readonly params: LlmVerifierParams,
+    ) {
+        const verifyRunName = params.usageRunName
+            ? `${params.usageRunName}-verify`
+            : 'code-review-verify';
+        this.lightSpec = buildVerifierAgentSpec({
+            modelId: params.modelId,
+            fallbackModelId: params.fallbackModelId,
+            runName: verifyRunName,
+            agentName: params.agentName,
+            tools: params.tools,
+            maxSteps: params.lightMaxSteps ?? 7,
+            providerOptions: params.providerOptions,
+        });
+        this.fullSpec = buildVerifierAgentSpec({
+            modelId: params.modelId,
+            fallbackModelId: params.fallbackModelId,
+            runName: verifyRunName,
+            agentName: params.agentName,
+            tools: params.tools,
+            maxSteps: params.fullMaxSteps ?? 10,
+            providerOptions: params.providerOptions,
+        });
+    }
+
+    /** Total token usage across all verify() calls made so far. */
+    get usage(): Readonly<typeof this.accUsage> {
+        return this.accUsage;
+    }
+
+    async verify(
+        candidate: FinderSuggestion,
+        ctx: ToolContext,
+    ): Promise<Verdict> {
+        const spec = this.params.forceFull ? this.fullSpec : this.lightSpec;
+
+        // Per-finding observation name so the trace shows which finding each
+        // verdict judged (e.g. "finder/verify:src/x.ts#42").
+        const loc = candidate.relevantLinesStart
+            ? `#${candidate.relevantLinesStart}`
+            : '';
+        const fnId = `${this.params.agentName ?? 'agent'}/verify:${candidate.relevantFile}${loc}`;
+        // The PR's whole history (capped upstream at MAX_PR_DECISIONS), not
+        // only the candidate's file: a repeat can sit on a file the code moved
+        // out of, and the finder sometimes names a file by its basename alone
+        // (#2011 round B), which a per-file match never found (#2020).
+        const matchingDecisions = this.params.previousDecisions;
+        const state = await this.runner.run(
+            spec,
+            {
+                prompt: verifierPromptFor(candidate, matchingDecisions, {
+                    laneFocus: this.params.laneFocus,
+                    repoInstructions: this.params.repoInstructions,
+                }),
+                ...toAiSdkTelemetryArgs(
+                    buildLangfuseTelemetry(fnId, this.params.telemetryMetadata),
+                ),
+            },
+            ctx,
+        );
+        const u = state.usage;
+        this.accUsage.inputTokens += u.inputTokens ?? 0;
+        this.accUsage.outputTokens += u.outputTokens ?? 0;
+        this.accUsage.reasoningTokens += u.reasoningTokens ?? 0;
+        this.accUsage.cacheReadTokens += u.cacheReadTokens ?? 0;
+        return extractVerdict(state, this.params.telemetryMetadata);
+    }
+}
