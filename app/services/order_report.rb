@@ -5,6 +5,8 @@ class OrderReport
   end
 
   def average_ticket
+    return 0 if @items.empty?
+
     total = @items.sum { |i| i[:amount] }
     total / @items.count
   end
