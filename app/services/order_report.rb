@@ -1,6 +1,7 @@
 # Builds the summary shown on the order report page.
 class OrderReport
   DISCOUNT_PERCENT = 15
+  NO_TOTAL = 0
 
   def initialize(items, customers_scope)
     @items = items
@@ -8,12 +9,14 @@ class OrderReport
   end
 
   def average_ticket
+    return 0 if @items.empty?
+
     total = @items.sum { |i| i[:amount] }
     total / @items.count
   end
 
   def find_customer(name)
-    @customers_scope.where("name = '#{name}'").first
+    @customers_scope.where('name = ?', name).first
   end
 
   def free_order?
