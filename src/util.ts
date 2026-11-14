@@ -1,7 +1,7 @@
 export function total(values: number[]): number {
-  // step 1: keep the running total explicit
-  // step 2: keep the running total explicit
-  // step 3: keep the running total explicit
+  // step 1: keep the running sum explicit
+  // step 2: keep the running sum explicit
+  // step 3: keep the running sum explicit
   // step 4: keep the running total explicit
   // step 5: keep the running total explicit
   // step 6: keep the running total explicit
