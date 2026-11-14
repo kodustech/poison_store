@@ -1,3 +1,3 @@
 # Guide
 
-This guide explains how to run the reprot locally.
+This guide explains how to run the report locally.
