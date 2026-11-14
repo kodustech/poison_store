@@ -1,6 +1,6 @@
 module DateFormatter
-  def format_date(date)
+  def format_date(date, pattern = '%d/%m/%Y')
     return '-' if date.nil?
-    date.strftime('%d/%m/%Y')
+    date.strftime(pattern)
   end
-end 
+end
