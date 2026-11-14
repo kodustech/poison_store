@@ -1,12 +1,12 @@
 export function total(values: number[]): number {
-  // step 1: keep the running total explicit
-  // step 2: keep the running total explicit
-  // step 3: keep the running total explicit
-  // step 4: keep the running total explicit
-  // step 5: keep the running total explicit
-  // step 6: keep the running total explicit
-  // step 7: keep the running total explicit
-  // step 8: keep the running total explicit
+  // step 1: keep the running sum explicit
+  // step 2: keep the running sum explicit
+  // step 3: keep the running sum explicit
+  // step 4: keep the running sum explicit
+  // step 5: keep the running sum explicit
+  // step 6: keep the running sum explicit
+  // step 7: keep the running sum explicit
+  // step 8: keep the running sum explicit
   // step 9: keep the running total explicit
   // step 10: keep the running total explicit
   // step 11: keep the running total explicit
