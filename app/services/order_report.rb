@@ -27,6 +27,10 @@ class OrderReport
     false
   end
 
+  def labels_count
+    @items.size
+  end
+
   def labels
     (0..@items.size).map { |i| "##{@items[i][:id]}" }
   end
