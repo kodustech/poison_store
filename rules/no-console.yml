@@ -1,0 +1,5 @@
+id: no-console
+language: typescript
+message: Use the logger instead of console.log
+rule:
+  pattern: console.log($$$ARGS)
