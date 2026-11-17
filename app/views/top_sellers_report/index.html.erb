@@ -1,0 +1,70 @@
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Funcionários que Mais Venderam</h1>
+    <div>
+      <%= link_to 'Relatório Mensal', monthly_sales_report_path, class: 'btn btn-outline-primary' %>
+      <%= link_to 'Vendas', medication_sales_path, class: 'btn btn-outline-success' %>
+    </div>
+  </div>
+
+  <!-- Filtros de Período -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Filtrar por Período</h5>
+      <%= form_with url: top_sellers_report_path, method: :get, local: true do |form| %>
+        <div class="row">
+          <div class="col-md-4">
+            <%= form.label :year, 'Ano', class: 'form-label' %>
+            <%= form.select :year, @year_options, { selected: @current_year }, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-4">
+            <%= form.label :month, 'Mês', class: 'form-label' %>
+            <%= form.select :month, @month_options, { selected: @current_month }, { class: 'form-select' } %>
+          </div>
+          <div class="col-md-4 d-flex align-items-end">
+            <%= form.submit 'Filtrar', class: 'btn btn-primary' %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Ranking de Vendedores -->
+  <div class="card">
+    <div class="card-header">
+      <h5>Top 10 Vendedores - <%= Date::MONTHNAMES[@current_month] %>/<%= @current_year %></h5>
+    </div>
+    <div class="card-body">
+      <% if @sellers_data.any? %>
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Funcionário</th>
+                <th>Vendas Realizadas</th>
+                <th>Itens Vendidos</th>
+                <th>Receita Gerada (R$)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @sellers_data.each_with_index do |seller, index| %>
+                <tr>
+                  <td>
+                    <span class="badge bg-primary fs-6"><%= index + 1 %></span>
+                  </td>
+                  <td><strong><%= seller[:name] %></strong></td>
+                  <td><%= seller[:sales_count] %></td>
+                  <td><%= seller[:items_sold] %> unidades</td>
+                  <td><strong>R$ <%= number_with_precision(seller[:total_revenue], precision: 2) %></strong></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="text-muted text-center">Nenhuma venda registrada para este período.</p>
+      <% end %>
+    </div>
+  </div>
+</div>
