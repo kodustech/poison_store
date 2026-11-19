@@ -8,4 +8,8 @@ class ReportService
     puts "report total: #{total}"
     total
   end
+
+  def order_count
+    @orders.size
+  end
 end
