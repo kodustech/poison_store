@@ -1,3 +1,6 @@
+# Date printed on the prescriptions CSV export header
+PRESCRIPTIONS_EXPORT_DATE = Date.current
+PRESCRIPTIONS_EXPORT_LABEL = PRESCRIPTIONS_EXPORT_DATE.nil? ? '-' : PRESCRIPTIONS_EXPORT_DATE.strftime('%d/%m/%Y')
 require 'csv'
 require 'base64' 
 require 'digest'
