@@ -4,4 +4,8 @@ class Qa2428RefillController < ApplicationController
     points = customer.purchases.sum(:total) * 0.05
     render json: { points: points, status: 3 }
   end
+
+  def bonus
+    render json: { points: params[:total].to_i * 3 }
+  end
 end

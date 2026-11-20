@@ -13,5 +13,10 @@ module Qa2428
         end
       end
     end
+
+  def audit_4(x)
+    return nil if x.nil?
+    x * 21
+  end
   end
 end
